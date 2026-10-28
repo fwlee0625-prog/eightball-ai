@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import ApiHealthBadge from '@/components/ApiHealthBadge.vue'
 import PoolTableScene from '@/components/PoolTableScene.vue'
 import { createInitialTableState } from '@/data/initialTableState'
+import { parseTableStateJson } from '@/utils/tableStateImport'
 import type { SceneStatus, TableBallState, TableState } from '@/types/tableState'
 
 interface SceneHandle {
@@ -18,6 +19,11 @@ const isDirty = ref(false)
 const isTopDown = ref(false)
 const modelStatus = ref<SceneStatus>('loading')
 const coordinateError = ref('')
+const importError = ref('')
+const importNotice = ref('')
+const importPending = ref(false)
+const MAX_IMPORT_FILE_BYTES = 1024 * 1024
+let importGeneration = 0
 const coordinateDraft = ref<{ x: string | number; y: string | number }>({ x: '', y: '' })
 const sceneRef = ref<SceneHandle | null>(null)
 
@@ -96,6 +102,8 @@ function applyCoordinateEdit() {
     return
   }
 
+  importGeneration += 1
+  importPending.value = false
   state.value = {
     ...state.value,
     state_version: state.value.state_version + 1,
@@ -108,6 +116,10 @@ function applyCoordinateEdit() {
 }
 
 function resetState() {
+  importGeneration += 1
+  importPending.value = false
+  importError.value = ''
+  importNotice.value = ''
   state.value = createInitialTableState()
   selectedBallId.value = null
   showIds.value = true
@@ -126,6 +138,53 @@ function resetView() {
   isTopDown.value = false
   sceneRef.value?.resetView()
 }
+
+async function importStateFile(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  // Allow the user to select the same file again after fixing it.
+  input.value = ''
+
+  const generation = ++importGeneration
+  importError.value = ''
+  importNotice.value = ''
+  if (file.size > MAX_IMPORT_FILE_BYTES) {
+    importError.value = '文件超过 1 MiB 限制，请选择较小的标准球局 JSON。'
+    return
+  }
+  importPending.value = true
+
+  try {
+    const imported = parseTableStateJson(await file.text())
+    if (generation !== importGeneration) return
+
+    const { active_width_mm: width, active_length_mm: length } = state.value.table_geometry
+    if (imported.table_geometry.active_width_mm !== width ||
+      imported.table_geometry.active_length_mm !== length) {
+      throw new Error(`当前工作台仅支持活动区域 ${length} × ${width} mm，请先完成其它尺寸的球桌标定。`)
+    }
+
+    const nextVersion = Math.max(state.value.state_version, imported.state_version) + 1
+    if (!Number.isSafeInteger(nextVersion)) throw new Error('状态版本已超出安全整数范围。')
+
+    state.value = { ...imported, state_version: nextVersion }
+    selectedBallId.value = null
+    coordinateError.value = ''
+    isDirty.value = true
+    importNotice.value = `已导入 ${file.name}，${imported.balls.length} 个检测目标；会话版本 v${nextVersion}。`
+  } catch (error) {
+    if (generation === importGeneration) {
+      importError.value = error instanceof Error ? error.message : '无法读取球局文件。'
+    }
+  } finally {
+    if (generation === importGeneration) importPending.value = false
+  }
+}
+
+onBeforeUnmount(() => {
+  importGeneration += 1
+})
 </script>
 
 <template>
@@ -160,7 +219,7 @@ function resetView() {
 
       <div class="sidebar-table-card">
         <span class="micro-label">ACTIVE PLAYING SURFACE</span>
-        <strong>2540 <i>×</i> 1270</strong>
+        <strong>{{ state.table_geometry.active_length_mm }} <i>×</i> {{ state.table_geometry.active_width_mm }}</strong>
         <span class="unit-label">MILLIMETERS</span>
         <div class="table-diagram" aria-hidden="true">
           <span class="table-diagram-line" />
@@ -225,7 +284,7 @@ function resetView() {
               @model-status="onModelStatus"
             />
             <div class="viewport-corner-label">
-              <span class="corner-label-index">TABLE / 001</span>
+              <span class="corner-label-index">TABLE / {{ state.table_id }}</span>
               <span>ACTIVE AREA</span>
             </div>
             <div class="viewport-instructions">
@@ -273,6 +332,28 @@ function resetView() {
               <span>状态版本</span>
               <strong><small>v</small>{{ state.state_version }}</strong>
             </div>
+          </div>
+
+          <div class="inspector-section inspector-section--import">
+            <div class="section-heading">
+              <h3>导入球局 JSON</h3>
+              <span class="section-muted">M1 / LOCAL FILE</span>
+            </div>
+            <label class="import-file-label" for="table-state-file">选择标准球局状态文件</label>
+            <input
+              id="table-state-file"
+              class="import-file-input"
+              name="state-import"
+              type="file"
+              accept=".json,application/json"
+              :disabled="importPending"
+              aria-describedby="table-state-file-help"
+              @change="importStateFile"
+            />
+            <p id="table-state-file-help" class="import-help">仅接受 v0.1.0 标准 TableState JSON，大小不超过 1 MiB；仅在本机浏览器读取，不上传到服务端。</p>
+            <p v-if="importPending" class="import-feedback" role="status">正在读取并校验球局文件…</p>
+            <p v-if="importNotice" class="import-feedback import-feedback--success" role="status">{{ importNotice }}</p>
+            <p v-if="importError" class="import-feedback import-feedback--error" role="alert">{{ importError }}</p>
           </div>
 
           <div class="inspector-section">

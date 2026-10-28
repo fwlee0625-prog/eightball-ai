@@ -9,6 +9,7 @@
 - 顶栏显示真实 API 健康状态（连接中/已连接/未连接），3秒超时，失败可重试；API离线仍可使用本地球局。
 - 使用 OrbitControls 提供三维旋转、平移和缩放。
 - 从仓库级 data/samples/table-state-001.json 读取标准球局样例，渲染 16 个视觉检测目标。
+- M1 首步支持本地导入 `TableState` v0.1.0 JSON：严格检查版本、字段、正数几何尺寸、检测 ID 唯一性、有限坐标、台面边界和可选置信度。失败保留当前球局，成功替换当前会话并递增状态版本；无网络上传。
 - 点击球体可选择目标；可查看并修改 X/Y 坐标，坐标修改只存在于当前浏览器会话。
 - 坐标修改会增加 state_version；可恢复原始样例。
 - 提供俯视视角、重置视角和检测 ID 标签开关。
@@ -25,7 +26,9 @@
 - 球体显示半径 28.575 mm 仅用于可视化，尚未由项目提供方确认。
 - 坐标方向沿用视觉契约中的 provisional 约定；未做自动镜像或坐标变换。
 - 当前只校验坐标是否位于活动台面矩形范围内，不检查球体重叠、球袋几何或规则合法性。
-- 当前样例为单帧状态；编辑不会写回原始样例文件，也不会调用后端 API。
+- 当前样例为单帧状态；编辑和文件导入不会写回原始样例文件，也不会调用后端 API。
+- 导入文件限制 1 MiB，需包含 `schema_version: "0.1.0"`、`table_id`、`state_version`、`source`、`coordinate_frame`、`table_geometry` 和 1–16 个 `balls`。接受可选 `confidence`，但不推断球号或碰撞是否合法。成功导入后本地版本设为 `max(当前版本, 文件版本) + 1`，旧选球清空；恢复样例仍回到原始 v1。
+- 当前工作台仅允许导入活动区域与现有会话完全相同的球桌（默认 2540 × 1270 mm），避免 GLB 与后备球桌尺寸混淆；其它尺寸需要完成对应模型标定再支持。视觉正方向仍为 provisional。轨迹 JSON / CSV 导入、时间戳、200FPS 回放与手工拖拽摆球未实现，M1 尚未完成。
 
 ## 技术栈
 
@@ -53,6 +56,7 @@ API默认 `http://localhost:8000`，可复制 `.env.example` 为 `.env.local` �
 - src/components/PoolTableScene.vue：GLB 加载、Three.js 场景、球体和视角交互。
 - src/components/ApiHealthBadge.vue / src/utils/apiHealth.ts：API健康状态、超时和重试。
 - src/utils/modelAsset.ts：精确分离模型内置球与共享资源去重释放。
+- src/utils/tableStateImport.ts：根据共享 v0.1.0 JSON Schema 的字段约定校验导入，并补充 ID 唯一性、有限数值及边界领域检查。
 - src/data/initialTableState.ts：引用仓库级标准状态样例。
 - src/types/tableState.ts：前端对标准球局状态的类型定义。
 - src/assets/main.css：响应式工作台样式。

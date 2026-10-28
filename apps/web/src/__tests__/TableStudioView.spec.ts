@@ -159,6 +159,132 @@ describe('TableStudioView', () => {
     expect(wrapper.text()).toContain('原始样例 · 只读来源')
   })
 
+
+  it('imports valid standard JSON, replaces the scene state, and increments the session version', async () => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    scene.vm.$emit('select-ball', 0)
+    await nextTick()
+
+    await wrapper.find('input[name="x"]').setValue('10')
+    await wrapper.find('form').trigger('submit')
+    await nextTick()
+    expect(wrapper.text()).toContain('STATE v2')
+
+    const fixture = structuredClone(scene.props('state') as TableState)
+    fixture.state_version = 1
+    fixture.balls = [{ id: 7, x_mm: 10.125, y_mm: -20.25, confidence: 0.5 }]
+    const file = {
+      name: 'import.json',
+      size: 500,
+      text: vi.fn<() => Promise<string>>().mockResolvedValue(JSON.stringify(fixture)),
+    }
+    const input = wrapper.get('input[name="state-import"]')
+    Object.defineProperty(input.element, 'files', { configurable: true, value: [file] })
+    await input.trigger('change')
+    await nextTick()
+    await vi.waitFor(() => expect(wrapper.text()).toContain('已导入 import.json'))
+
+    const imported = scene.props('state') as TableState
+    expect(imported.state_version).toBe(3)
+    expect(imported.balls).toEqual(fixture.balls)
+    expect(scene.props('selectedBallId')).toBeNull()
+    expect(wrapper.text()).toContain('检测球数')
+    expect(wrapper.text()).toContain('本地修改 · 未保存')
+    expect(wrapper.text()).toContain('STATE v3')
+    expect(file.text).toHaveBeenCalledOnce()
+  })
+
+  it('preserves prior state and selection on invalid imported coordinates', async () => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    scene.vm.$emit('select-ball', 0)
+    await nextTick()
+    const initial = scene.props('state') as TableState
+    const bad = structuredClone(initial)
+    bad.balls[0]!.x_mm = 700
+    const input = wrapper.get('input[name="state-import"]')
+    Object.defineProperty(input.element, 'files', {
+      configurable: true,
+      value: [{
+        name: 'bad.json',
+        size: 100,
+        text: () => Promise.resolve(JSON.stringify(bad)),
+      }],
+    })
+    await input.trigger('change')
+    await vi.waitFor(() => expect(wrapper.text()).toContain('坐标超出活动台面矩形'))
+    expect(scene.props('state')).toBe(initial)
+    expect(scene.props('selectedBallId')).toBe(0)
+    expect(wrapper.text()).toContain('STATE v1')
+  })
+
+  it('rejects mismatched table geometry and oversized input without changing state', async () => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    const initial = scene.props('state') as TableState
+    const importInput = wrapper.get('input[name="state-import"]')
+    const altered = structuredClone(initial)
+    altered.table_geometry.active_width_mm = 1000
+    Object.defineProperty(importInput.element, 'files', {
+      configurable: true,
+      value: [{
+        name: 'other-table.json',
+        size: 512,
+        text: () => Promise.resolve(JSON.stringify(altered)),
+      }],
+    })
+    await importInput.trigger('change')
+    await vi.waitFor(() => expect(wrapper.text()).toContain('当前工作台仅支持活动区域'))
+    expect(scene.props('state')).toBe(initial)
+
+    const readLarge = vi.fn<() => Promise<string>>()
+    Object.defineProperty(importInput.element, 'files', {
+      configurable: true,
+      value: [{ name: 'large.json', size: 1024 * 1024 + 1, text: readLarge }],
+    })
+    await importInput.trigger('change')
+    expect(wrapper.text()).toContain('文件超过 1 MiB')
+    expect(readLarge).not.toHaveBeenCalled()
+    expect(scene.props('state')).toBe(initial)
+  })
+
+  it('ignores an import that resolves after the user resets the session', async () => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    const initial = scene.props('state') as TableState
+    let resolveRead: (value: string) => void = () => {}
+    const pending = new Promise<string>((resolve) => { resolveRead = resolve })
+    const importInput = wrapper.get('input[name="state-import"]')
+    Object.defineProperty(importInput.element, 'files', {
+      configurable: true,
+      value: [{ name: 'delayed.json', size: 80, text: () => pending }],
+    })
+    await importInput.trigger('change')
+    await wrapper.get('.reset-state-button').trigger('click')
+    resolveRead(JSON.stringify({ ...initial, balls: [{ id: 2, x_mm: 1, y_mm: 1 }] }))
+    await nextTick()
+    await Promise.resolve()
+    expect(scene.props('state')).toEqual(initial)
+    expect(wrapper.text()).toContain('STATE v1')
+    expect(wrapper.text()).not.toContain('已导入 delayed.json')
+  })
+
+  it('shows file read errors and allows retrying an unchanged file', async () => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    const initial = scene.props('state') as TableState
+    const importInput = wrapper.get('input[name="state-import"]')
+    Object.defineProperty(importInput.element, 'files', {
+      configurable: true,
+      value: [{ name: 'broken.json', size: 5, text: () => Promise.reject(new Error('读取失败')) }],
+    })
+    await importInput.trigger('change')
+    await vi.waitFor(() => expect(wrapper.text()).toContain('读取失败'))
+    expect(scene.props('state')).toBe(initial)
+    expect((importInput.element as HTMLInputElement).value).toBe('')
+  })
+
   it('restores the original sample after local edits', async () => {
     const wrapper = mountStudio()
     const scene = wrapper.findComponent(PoolTableSceneStub)
