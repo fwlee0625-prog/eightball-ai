@@ -241,7 +241,7 @@ function syncBalls() {
 
   for (const ball of props.state.balls) {
     const material = new THREE.MeshStandardMaterial({
-      color: TRACKING_COLORS[ball.id % TRACKING_COLORS.length],
+      color: TRACKING_COLORS[ball.id % TRACKING_COLORS.length]!,
       roughness: 0.22,
       metalness: 0.03,
       emissive: 0x000000,

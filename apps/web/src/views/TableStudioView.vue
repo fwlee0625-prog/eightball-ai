@@ -17,7 +17,7 @@ const isDirty = ref(false)
 const isTopDown = ref(false)
 const modelStatus = ref<SceneStatus>('loading')
 const coordinateError = ref('')
-const coordinateDraft = ref({ x: '', y: '' })
+const coordinateDraft = ref<{ x: string | number; y: string | number }>({ x: '', y: '' })
 const sceneRef = ref<SceneHandle | null>(null)
 
 const selectedBall = computed<TableBallState | null>(
@@ -70,7 +70,7 @@ function applyCoordinateEdit() {
   const ball = selectedBall.value
   if (!ball) return
 
-  if (!coordinateDraft.value.x.trim() || !coordinateDraft.value.y.trim()) {
+  if (!String(coordinateDraft.value.x).trim() || !String(coordinateDraft.value.y).trim()) {
     coordinateError.value = '请输入 X 和 Y 坐标。'
     return
   }
