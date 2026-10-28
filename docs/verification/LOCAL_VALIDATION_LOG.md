@@ -463,3 +463,49 @@ Git HEAD：
 - **浏览器回归：** 启动 `pnpm dev`；选中检测 ID 0，记录 X/Y 原值；只改 X 为 10 并应用，确认版本增加且 Y 精确保持原值；恢复样例后只改 Y 为 20 并应用，确认版本增加且 X 精确保持原值。检查输入有效性没有 `stepMismatch`；同时确认超出 `[-635, 635]) 的 X 与 `[-1270, 1270]) 的 Y 仍不能提交。
 - **结果要求：** 将本轮真实命令、退出码、关键输出、浏览器操作/截图路径及工作区状态追加为下一条运行记录（R-007）；未执行的项保持 NOT RUN，不把代码修改本身当作通过。
 - **未纳入本任务：** GLB 自带球体的显示/包围盒处理、台呢四边与袋口标注、坐标轴方向和真实球半径仍需单独处理；本次不据此放行物理仿真。
+
+
+## 11. 本地验证追加记录
+
+#### R-007：单轴坐标编辑精度与边界回归
+
+- 日期/时区：2026-10-28，Asia/Shanghai；执行者：Codex。环境：macOS 15.7.7 (24G720)、Node v24.12.0、pnpm 11.25.0；沿用已安装依赖，没有安装或调整版本。
+- 初始 Git：`main`，HEAD `977c52fda3facaa035ce10e0ea8f1a38150c4ab4`；`git status --short --branch` 退出0，仅输出 `## main...origin/main`，工作区干净。
+- 已读取根目录、apps/web 的 AGENTS.md / README.md、docs 的 AGENTS.md / README.md、全部历史验证记录，以及架构、视觉契约、数据字典和流式消息设计。通过 GitHub connector 读取 PR #1，确认实际三个文件的差异及远程 head。
+- 切换目标分支：首次 `git switch --track origin/fix/single-axis-coordinate-step-20261028` 退出128，沙箱不允许创建 `.git/index.lock`；申请扩大执行权限后，同一命令退出0。没有强制切换、清理或覆盖文件。切换后工作区干净，分支 `fix/single-axis-coordinate-step-20261028`，HEAD `3e21c6b704a73d2fa4ad8929e74261a725372e3f`，与 PR head 及本地 origin 对应引用一致。
+- 本轮修改文件：`apps/web/src/__tests__/TableStudioView.spec.ts` 补充12项参数化回归（四个边界、双轴上下越界、双轴空值和双轴字母输入）；本文档追加 R-007。已有两项单轴测试检查未修改轴精确数值及 STATE v2，符合要求，没有删减断言。
+- 产品代码检查：`TableStudioView.vue` 两轴均为 `step="any"`；X 的 min/max 为 ±635，Y 为 ±1270；应用层保留空值、有限数字、矩形范围校验。无需进一步修改产品代码。测试直接触发表单提交验证应用层，浏览器通过点击提交按钮验证原生约束，两者分别取证。
+
+**自动化检查：按要求顺序执行，cwd=apps/web**
+
+| 实际命令 | 真实退出码 | 结果与关键输出 | 证据 |
+|---|---|---|---|
+| `pnpm type-check` | 0 | PASS；`vue-tsc --build`，无类型错误 | `/tmp/eightball-r007/1.log` |
+| `pnpm exec vitest run` | 0 | PASS；2个文件、20项测试全部通过，无未处理异常；含原有 X-only / Y-only 及本轮12项回归 | `/tmp/eightball-r007/2.log` |
+| `pnpm exec oxlint .` | 0 | PASS；无诊断输出 | `/tmp/eightball-r007/3.log` |
+| `pnpm exec eslint .` | 0 | PASS；无诊断输出 | `/tmp/eightball-r007/4.log` |
+| `pnpm build` | 0 | PASS（有警告）；Vite 8.3.5，38 modules，built in 404ms；TableStudioView 654.19kB / gzip166.91kB | `/tmp/eightball-r007/5.log` |
+
+- 原始命令、退出码和完整输出另存 `/tmp/eightball-r007/checks.json`；以上由 Python subprocess 顺序执行并记录真实 returncode。构建保留原有 `Some chunks are larger than 500 kB after minification` 警告，没有修改阈值或隐藏警告。
+
+**真实浏览器：V-007-01 至 V-007-03**
+
+- Spark `list_projects({})` 确认项目 `p_01047fdd` / 终端 `t_97940029` 正在运行，沿用该平台管理的 `pnpm dev --host localhost --port 5173`，不重复启动进程。Spark 日志可见18:37:06对 TableStudioView.vue 的 HMR 更新；16:10旧失败日志属于历史启动，不代表本轮失败。
+- 使用 Codex 内置真实浏览器访问 `http://localhost:5173/`，页面显示“模型已载入”；本地应用无需登录。使用页面按钮恢复样例、切换俯视，通过画布实际点击选择 ID0，没有调用组件内部函数或注入应用状态。DOM evaluate 仅只读提取输入值、validity和页面文字；所有提交均点击“应用坐标”。浏览器操作非 shell 命令，退出码记 N/A。
+- 原始 ID0：X=`-104.72715759277344`、Y=`-515.1940307617188`。
+
+| ID / 操作 | 实际结果 | 状态 |
+|---|---|---|
+| V-007-01：恢复样例→选ID0→只将X改10→应用 | STATE v1→v2；X=10，Y完整保留 `-515.1940307617188`；两轴valid=true、stepMismatch=false；另一次重复操作后取消选择并重新选ID0，确认提交后的状态仍是相同精确值 | PASS |
+| V-007-02：恢复样例→选ID0→只将Y改20→应用 | STATE v1→v2；Y=20，X完整保留 `-104.72715759277344`；两轴valid=true、stepMismatch=false；重复操作并取消/重新选球，确认提交后状态保留精确值 | PASS |
+| V-007-03：分别从原样例只改X=-635、635；只改Y=-1270、1270 | 四次均从v1到v2；未修改轴保持原始高精度，均valid=true、stepMismatch=false | PASS |
+| V-007-03：分别X=-636、636；Y=-1271、1271→应用 | 原生rangeUnderflow / rangeOverflow=true、valid=false；版本保持v1；取消选择并重选ID0，双轴均为原值，未污染状态 | PASS |
+| V-007-03：分别清空X、Y→应用 | 显示“请输入 X 和 Y 坐标。”，版本保持v1；取消选择/重选后原始坐标保持不变 | PASS |
+| V-007-03：分别清空X、Y再按字母a→应用 | number输入拒收a，value保持空，应用提示“请输入 X 和 Y 坐标。”，v1不变；重新选球确认原始双轴不变 | PASS |
+
+- 浏览器原始证据：`/tmp/eightball-r007/browser.json`（每次输入值、step/min/max、validity、完整页面文字）；截图 `/tmp/eightball-r007/x-only.png`、`y-only.png`、`y-only-committed.png`、`final.png`。这些是本机临时文件，可能被系统清理，关键结果已在本记录内联保留。
+- 额外证据复核：根目录内联 `python3 - <<'PY'` 读取 browser.json 并断言单轴提交及重新选择后的精确值、v2、valid / stepMismatch，检查边界v2及非法输入v1、重新选择后的原始坐标，退出0，输出 `PASS: verified 26 recorded browser snapshots; exact single-axis values, versions, native validity and invalid-input state preservation.`。
+- 资产复核：`shasum -a 256 apps/web/public/model/billiards.glb apps/web/pnpm-lock.yaml` 退出0，分别仍为 `39f545f0f092c569b14d83c5eb1885a574484e8a4c04612cbfd05349101e0e0b` 和 `3dc9245952150f3ecf94a4c4781fc6709fb497c6951f0a58ddd770a26c3eb2ba`，与此前记录一致。未修改GLB、球桌尺寸、半径、样例、坐标映射、依赖声明或锁文件。
+- 最终状态：**PASS（仅本轮单轴坐标编辑范围）**；五项自动化、X-only、Y-only、矩形边界与非法输入均通过，无本轮未解决失败或阻塞。历史 R-000 至 R-006 和 V-007 待执行交接原文保留；上述本轮实际结果取代“待执行”的当前状态，不改写历史。
+- 未验证/限制：本轮没有重做几何标定、物理参数、球体重叠或完整浏览器性能/可访问性审计；不因自动化或浏览器通过而放行几何标定。后续仍需单独确认真实台呢、袋口、轴向和球半径。构建体积警告继续保留。
+- 收尾：`git diff --check` 退出0；复核差异仅本轮测试文件与本文档，未创建新提交、未推送或合并PR。分支及HEAD仍如上；工作区保留这两个文件的未提交修改。

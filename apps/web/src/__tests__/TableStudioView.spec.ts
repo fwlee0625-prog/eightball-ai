@@ -117,6 +117,47 @@ describe('TableStudioView', () => {
     expect(wrapper.text()).toContain('原始样例 · 只读来源')
   })
 
+  it.each([
+    ['x', '-635'], ['x', '635'], ['y', '-1270'], ['y', '1270'],
+  ])('accepts the %s boundary %s without changing the other axis', async (axis, value) => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    scene.vm.$emit('select-ball', 0)
+    await nextTick()
+    const initialState = scene.props('state') as TableState
+    const originalBall = initialState.balls.find((ball) => ball.id === 0)!
+
+    await wrapper.find('input[name="' + axis + '"]').setValue(value)
+    await wrapper.find('form').trigger('submit')
+
+    const updatedState = scene.props('state') as TableState
+    expect(updatedState.state_version).toBe(initialState.state_version + 1)
+    expect(updatedState.balls.find((ball) => ball.id === 0)).toEqual({
+      ...originalBall,
+      [axis + '_mm']: Number(value),
+    })
+  })
+
+  it.each([
+    ['x', '-636', 'X 坐标必须在'], ['x', '636', 'X 坐标必须在'],
+    ['y', '-1271', 'Y 坐标必须在'], ['y', '1271', 'Y 坐标必须在'],
+    ['x', '', '请输入 X 和 Y 坐标'], ['y', '', '请输入 X 和 Y 坐标'],
+    ['x', 'abc', '请输入 X 和 Y 坐标'], ['y', 'abc', '请输入 X 和 Y 坐标'],
+  ])('rejects invalid %s input %s without changing state', async (axis, value, error) => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    scene.vm.$emit('select-ball', 0)
+    await nextTick()
+    const initialState = scene.props('state') as TableState
+
+    await wrapper.find('input[name="' + axis + '"]').setValue(value)
+    await wrapper.find('form').trigger('submit')
+
+    expect(wrapper.get('[role="alert"]').text()).toContain(error)
+    expect(scene.props('state')).toBe(initialState)
+    expect(wrapper.text()).toContain('原始样例 · 只读来源')
+  })
+
   it('restores the original sample after local edits', async () => {
     const wrapper = mountStudio()
     const scene = wrapper.findComponent(PoolTableSceneStub)
