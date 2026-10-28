@@ -21,7 +21,11 @@ export function detachEmbeddedBalls(root: THREE.Object3D): EmbeddedBallsFilterRe
   // Reject partial matches, duplicate identifiers, nested unknowns, and non-mesh objects.
   const expectedNames = new Set(Array.from({ length: 16 }, (_, index) => `Ball_${index}`))
   for (const child of balls.children) {
-    if (!(child instanceof THREE.Mesh) || !expectedNames.delete(child.name)) {
+    if (
+      !(child instanceof THREE.Mesh) ||
+      child.children.length !== 0 ||
+      !expectedNames.delete(child.name)
+    ) {
       return { status: 'unexpected-structure', detached: null }
     }
   }

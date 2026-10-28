@@ -84,6 +84,48 @@ describe('GLB embedded-ball separation', () => {
     expect(balls.parent).toBe(table)
   })
 
+  it.each([
+    { id: 0, kind: 'mesh' },
+    { id: 15, kind: 'group' },
+  ])('preserves the entire asset when Ball_$id contains an unknown $kind', ({ id, kind }) => {
+    const { scene, table, surface, balls } = makeFixture()
+    const texture = new THREE.Texture()
+    const material = new THREE.MeshBasicMaterial({ map: texture })
+    const decoration = new THREE.Mesh(new THREE.BoxGeometry(), material)
+    decoration.name = 'UnexpectedDecoration'
+    const extra = kind === 'mesh' ? decoration : new THREE.Group()
+    if (extra !== decoration) extra.add(decoration)
+    const ball = balls.getObjectByName(`Ball_${id}`)!
+    ball.add(extra)
+
+    const hierarchy: { object: THREE.Object3D; parent: THREE.Object3D | null; children: THREE.Object3D[] }[] = []
+    const resources = new Set<THREE.BufferGeometry | THREE.Material | THREE.Texture>([texture])
+    scene.traverse((object) => {
+      hierarchy.push({ object, parent: object.parent, children: object.children.slice() })
+      if (object instanceof THREE.Mesh) {
+        resources.add(object.geometry)
+        const materials = Array.isArray(object.material) ? object.material : [object.material]
+        for (const usedMaterial of materials) resources.add(usedMaterial)
+      }
+    })
+    const disposed = vi.fn<() => void>()
+    for (const resource of resources) resource.addEventListener('dispose', disposed)
+
+    expect(detachEmbeddedBalls(scene)).toEqual({
+      status: 'unexpected-structure',
+      detached: null,
+    })
+    for (const entry of hierarchy) {
+      expect(entry.object.parent).toBe(entry.parent)
+      expect(entry.object.children).toHaveLength(entry.children.length)
+      entry.children.forEach((child, index) => expect(entry.object.children[index]).toBe(child))
+    }
+    expect(scene.getObjectByName('Table')).toBe(table)
+    expect(scene.getObjectByName('TableSurface')).toBe(surface)
+    expect(scene.getObjectByName('UnexpectedDecoration')).toBe(decoration)
+    expect(disposed).not.toHaveBeenCalled()
+  })
+
   it('does not remove ambiguous matching top-level groups', () => {
     const { scene, table, balls } = makeFixture()
     const second = new THREE.Group()

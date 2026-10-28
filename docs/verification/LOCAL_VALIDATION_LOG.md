@@ -605,3 +605,27 @@ pnpm build
 - 五项规定自动化检查PASS；新增7项单元测试PASS；当前真实GLB过滤、包围盒及浏览器主要交互PASS；共享资源合成测试PASS；无新的渲染错误或网络失败。
 - 总体 **FAIL（异常结构保护补充验证失败）**；几何标定独立保持 **NEEDS REVIEW**；无工具/依赖/浏览器类BLOCKED。建议先修复上述嵌套结构保护，再重跑7项及新回归；构建体积与阴影警告可独立安排，不需本轮改变模型或坐标。
 - 验证证据位于 `/tmp/eightball-r008/`，为本机临时文件，可能被系统清理，关键结果已内联保留。本轮仅追加本验证文档，未修改源码/测试/资产、未创建提交；HEAD仍为a69e026，分支不变。
+
+
+#### R-009：修复内置球 Mesh 的未知后代保护
+
+- 日期/时区：2026-10-28，Asia/Shanghai，约21:57；执行者：Codex。用户明确授权本轮由Codex修复R-008发现的问题，此授权更新此前“仅验证、不修源码”的任务范围。
+- 开始前：`git status --short --branch` 退出0，工作区干净，分支 `fix/single-axis-coordinate-step-20261028`，领先origin 1个提交；`git rev-parse HEAD` 退出0，为 `946aa1760f3cc79c5f4c01b6c2176ddbbd8e8cad`。保留该提交及全部历史验证记录，不改写R-008失败结论。
+- 本轮修改：`apps/web/src/utils/modelAsset.ts` 在任何场景分离前，要求16个已知球Mesh均没有子节点，否则返回unexpected-structure、detached=null；`apps/web/src/__tests__/modelAsset.spec.ts` 新增两项回归；本文档追加本记录。未修改GLB、尺寸、球半径、坐标映射、样例、依赖或锁文件。
+- 设计决定：已核验资产中的16个球是叶子Mesh，额外Mesh或非Mesh子节点都属于未知结构；直接拒绝有子节点的球即可保护任意更深后代，不需要递归删除，也不会先分离部分对象。
+- 新回归分别构造Ball_0下的未知Mesh、Ball_15下的未知Group（Group再包含装饰Mesh）；断言unexpected-structure、detached=null，完整场景每个对象的父引用、子引用及顺序不变，Table/TableSurface/装饰Mesh仍是原对象，所有相关几何、材质、纹理均未收到dispose事件。原有7项测试与全部断言保留。
+
+| 实际命令（cwd=apps/web，按顺序执行） | 退出码 | 结果与关键输出 | 证据 |
+|---|---|---|---|
+| `pnpm type-check` | 0 | PASS；vue-tsc --build | `/tmp/eightball-r009/1.log` |
+| `pnpm exec vitest run` | 0 | PASS；3文件、29项全部通过，modelAsset原7项及新增2项通过，无未处理异常 | `/tmp/eightball-r009/2.log` |
+| `pnpm exec oxlint .` | 0 | PASS；无诊断输出 | `/tmp/eightball-r009/3.log` |
+| `pnpm exec eslint .` | 0 | PASS；无诊断输出 | `/tmp/eightball-r009/4.log` |
+| `pnpm build` | 0 | PASS（有警告）；39 modules、built in330ms；TableStudioView655.20kB/gzip167.27kB | `/tmp/eightball-r009/5.log` |
+
+- 完整命令、真实退出码与输出：`/tmp/eightball-r009/checks.json`。保留原有 `Some chunks are larger than 500 kB after minification` 警告，没有提高阈值或隐藏警告。
+- 根目录 `node /tmp/eightball-r009/nested-structure.mjs` 退出0：复用R-008最小复现，仅把证据输出路径改到r009以保留旧失败证据；实际actual=unexpected-structure、remainingRoots=[Table,Balls]、unknownStillInScene=true、result=PASS。数据 `nested-structure.json`。
+- 根目录 `node /tmp/eightball-r009/geometry.mjs` 退出0：复用R-008真实GLB解码/生产函数检查，仅更改证据输出路径；原始33Mesh→保留17Mesh+分离16Mesh，Table/TableSurface及其包围盒不变；maxY仍从0.888215995064降至0.870086408914米。场景scale=(1000,1000,1000)，size=(1564.418441048,863.072978051,2873.583523716)mm；66个重建几何/材质对象重复清理后各释放一次。脚本不解码纹理，纹理共享行为由单元测试覆盖。完整数据 `geometry.json`。
+- GLB实际读取SHA-256仍为 `39f545f0f092c569b14d83c5eb1885a574484e8a4c04612cbfd05349101e0e0b`。所有临时证据在 `/tmp/eightball-r009/`，可能被系统清理；上述关键结果已内联保留。
+- 本轮未重复真实浏览器整轮交互验收：改动限过滤器对未知结构的保护，真实资产行为已通过重新执行生产函数与几何检查确认；R-008浏览器记录保留为历史结果，不虚报为本轮执行。几何标定仍为NEEDS REVIEW，未做长期GPU内存测量。
+- 最终状态：**PASS（R-008未知后代过滤缺口已修复并通过回归）**；无本轮失败或阻塞。`git diff --check`退出0；复核仅上述源码、测试和本文档三文件变更。未创建新提交、未推送或合并；分支与HEAD不变，保留三文件未提交修改。
