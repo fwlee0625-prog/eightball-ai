@@ -27,6 +27,7 @@ function mountStudio() {
     global: {
       stubs: {
         PoolTableScene: PoolTableSceneStub,
+        ApiHealthBadge: true,
       },
     },
   })

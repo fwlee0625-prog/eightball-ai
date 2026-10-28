@@ -629,3 +629,52 @@ pnpm build
 - GLB实际读取SHA-256仍为 `39f545f0f092c569b14d83c5eb1885a574484e8a4c04612cbfd05349101e0e0b`。所有临时证据在 `/tmp/eightball-r009/`，可能被系统清理；上述关键结果已内联保留。
 - 本轮未重复真实浏览器整轮交互验收：改动限过滤器对未知结构的保护，真实资产行为已通过重新执行生产函数与几何检查确认；R-008浏览器记录保留为历史结果，不虚报为本轮执行。几何标定仍为NEEDS REVIEW，未做长期GPU内存测量。
 - 最终状态：**PASS（R-008未知后代过滤缺口已修复并通过回归）**；无本轮失败或阻塞。`git diff --check`退出0；复核仅上述源码、测试和本文档三文件变更。未创建新提交、未推送或合并；分支与HEAD不变，保留三文件未提交修改。
+
+
+#### R-010：补齐 M0 服务、配置、检查与 CI
+
+- 日期/时区：2026-10-28，Asia/Shanghai，约22:00起；执行者：Codex。环境：macOS15.7.7、Python3.13.7、Node24.12.0、pnpm11.25.0、uv0.11.3。
+- 用户要求先提交现有修复再补齐M0。开始时HEAD=`946aa1760f3cc79c5f4c01b6c2176ddbbd8e8cad`，同一分支，领先origin1个提交；仅modelAsset源码、测试和R-009日志三文件有改动。`git diff --check`退出0，复核后执行指定三文件的git add与 `git commit -m 'fix: 拒绝过滤包含未知后代的内置球结构'`，退出0，生成 `b3f46f1`；该提交后工作区干净。M0工作基线即b3f46f1，不覆盖既有提交。
+- 已读取根/API/Web/Contracts/Python/文档规范、M0设计、当前实现与相关坐标/架构契约；联网核对FastAPI首步/测试/CORS/WebSocket、uv锁定与GitHub Actions、GitHub setup-node和pnpm action官方资料（2026-10-28）。
+- 修改范围：根pyproject.toml/uv.lock/.gitignore/.env.example，新增API包和API测试；新增健康响应Schema/TS校验器、前端请求函数/状态组件/测试，工作台引入独立健康状态组件，原工作台测试仅stub该组件以隔离网络；新增CI工作流；同步根/API/Web/Contracts README。无规则、物理、规划或真实数据接口，未修改GLB、样例、尺寸、映射或前端依赖版本/锁文件。
+- API实际实现GET /health，返回status=ok、service=eightball-api、version=0.1.0；仅存活语义。CORS默认两个localhost origin、只允许GET、无凭据；JSON配置允许[]关闭、拒绝通配符/路径/凭据/无效端口/空白。启动日志记录版本及origin数量，access日志保留请求状态，不记录业务请求体。
+- 健康响应以packages/contracts/schemas/health-response.schema.json作为共享校验依据：API测试用jsonschema校验生产响应，TS消费者从Schema读取字段常量；未知版本、缺字段、附加字段、非法类型被拒绝。前端显示连接中/已连接/未连接、3秒超时、重试；组件卸载会取消请求并清理定时器；错误配置给出明确提示，不把API存活解释为算法已实现。
+
+**依赖、最小示例与首轮失败（保留真实结果）**
+
+- 初次 `UV_CACHE_DIR=/tmp/eightball-uv-cache uv sync --python 3.13 --no-python-downloads` 退出2：PyPI DNS解析失败，`Failed to fetch https://pypi.org/simple/jsonschema/`。获准扩大执行权限后同命令退出0，Resolved30 packages、Installed28；新建仓库隔离.venv及uv.lock，不使用系统Python包。
+- 解析并锁定FastAPI0.162.0、Starlette1.10.0、Pydantic2.14.1、Uvicorn0.54.0、pytest9.2.0、Ruff0.17.3、httpx0.28.1、jsonschema4.26.0；uv.lock冻结传递依赖，现有前端锁文件未改。
+- 根目录 `.venv/bin/python /tmp/eightball-r010/official-minimal.py` 退出0：按官方最小示例运行HTTP Hello World与WebSocket文本回声（TestClient）；仅临时示例，不对外增加WebSocket路由。
+- 首轮pytest退出0，28项通过；首轮Ruff退出1，继承本机全局偏好导致TRY004/I001/UP032共21项（包括既有核心代码）。本仓库此前没有Ruff基线，随后在pyproject显式定义初始E4/E7/E9/F检查范围，避免个人配置影响；没有为消警而改写核心算法，也未执行--fix。
+- 首轮前端type-check退出2、build退出1：TS配置不支持Object.hasOwn；Oxlint退出1：新增toThrow缺少消息/类型；Vitest退出0（47项）、ESLint退出0。改为兼容的hasOwnProperty.call、对JSON异常断言SyntaxError后解决。证据 `/tmp/eightball-r010/web-first.json`、web-first-1.log至web-first-5.log。
+
+**最终本地检查（真实命令与退出码）**
+
+| cwd | 命令 | 退出码 | 结果 |
+|---|---|---|---|
+| 根 | `UV_CACHE_DIR=/tmp/eightball-uv-cache uv sync --locked --offline` | 0 | PASS；Resolved30、Checked28，锁文件与配置一致 |
+| 根 | `.venv/bin/python /tmp/eightball-r010/official-minimal.py` | 0 | PASS；HTTP+WebSocket最小示例 |
+| 根 | `.venv/bin/python -m pytest -q` | 0 | PASS；28项（API17项+既有核心11项），1个弃用警告 |
+| 根 | `.venv/bin/ruff check .` | 0 | PASS；All checks passed |
+| apps/web | `pnpm type-check` | 0 | PASS |
+| apps/web | `pnpm exec vitest run` | 0 | PASS；5文件47项，无未处理异常 |
+| apps/web | `pnpm exec oxlint .` | 0 | PASS |
+| apps/web | `pnpm exec eslint .` | 0 | PASS |
+| apps/web | `pnpm build` | 0 | PASS（有警告）；45 modules、built in300ms；TableStudioView657.52kB/gzip168.78kB |
+
+- 完整最终命令、cwd、returncode及输出：`/tmp/eightball-r010/final-checks.json`、final-0.log至final-8.log。前端新增18项涵盖正常响应、非法配置/响应、HTTP失败、JSON错误、连接中、失败重试、超时及卸载取消。API覆盖响应契约、HTTP方法/未实现路径、CORS预检与配置正常/边界/异常。
+- 保留警告：构建仍有500kB大chunk警告；Starlette TestClient使用httpx时输出 `Using httpx with starlette.testclient is deprecated; install httpx2 instead.`，未隐藏。后续测试依赖切换需独立审查；当前版本测试实际通过。
+
+**真实启动与浏览器联通：PASS**
+
+- 通过Spark读取原web项目p_01047fdd，沿用运行中localhost:5173；新增API项目p_95604cda/终端t_a146d9eb，根目录命令 `.venv/bin/python -m uvicorn billiards_api.main:create_app --factory --app-dir apps/api --host localhost --port 8000`，启动成功，监听8000。通过平台stop/start完成一次故障恢复实验，没有从shell启动或重启项目。
+- 内置真实浏览器打开localhost:5173，显示API已连接；平台停止API后刷新，显示API未连接、中文排查提示及重试按钮；平台重新启动API后点击重试，变为API已连接。原始球局仍STATEv1、16球、模型已载入，本地球局功能不依赖健康检查成功。
+- 浏览器CDP捕获真实 `http://localhost:8000/health` HTTP200、application/json、content-length59、`access-control-allow-origin=http://localhost:5173`、Vary=Origin、无凭据头、非磁盘/ServiceWorker缓存；前端显示连接成功意味着已通过实际响应契约验证。
+- 证据 `/tmp/eightball-r010/browser-network.json`、browser-api-down.txt、browser-api-recovered.txt、browser-final.txt；截图api-down.png、api-recovered.png、api-connected.png。Spark日志实际含启动/停止/重启、`Eightball API 0.1.0 ready; configured CORS origins: 2`、两次GET /health 200。运行中服务退出码N/A，浏览器操作退出码N/A。
+- GLB与前端锁文件SHA256复算未变，分别 `39f545f0f092c569b14d83c5eb1885a574484e8a4c04612cbfd05349101e0e0b`、`3dc9245952150f3ecf94a4c4781fc6709fb497c6951f0a58ddd770a26c3eb2ba`。
+
+**CI与里程碑状态（提交前）**
+
+- .github/workflows/ci.yml配置push/pull_request/workflow_dispatch，contents:read、10分钟预算；Python使用uv0.11.3和Python3.13、uv sync --locked、pytest与Ruff；Web固定Node24.12.0/pnpm11.25.0，以已有pnpm锁文件安装并执行五项检查。未部署或合并PR。
+- 本地实现与验证PASS；本记录写入时远程工作流尚未运行，**M0最终验收暂为NOT RUN（远程CI绿灯待验证）**。后续在本记录后追加实际远程运行结果，不把工作流存在当作CI通过。
+- 已知限制：无生产部署/鉴权，API仅健康接口；Vue RC覆盖、既有体积/阴影警告仍在；几何标定保持NEEDS REVIEW。M1轨迹导入/回放和M2物理仿真未因此完成。临时证据可能被系统清理，关键结果已内联。

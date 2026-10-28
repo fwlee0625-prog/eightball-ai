@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 
+import ApiHealthBadge from '@/components/ApiHealthBadge.vue'
 import PoolTableScene from '@/components/PoolTableScene.vue'
 import { createInitialTableState } from '@/data/initialTableState'
 import type { SceneStatus, TableBallState, TableState } from '@/types/tableState'
@@ -195,6 +196,7 @@ function resetView() {
           <p class="workspace-subtitle">将视觉坐标映射到三维球桌，检查位置并修正输入。</p>
         </div>
         <div class="header-badges">
+          <ApiHealthBadge />
           <span class="header-badge"><span class="status-dot" />LOCAL SESSION</span>
           <span class="version-badge">STATE v{{ state.state_version }}</span>
         </div>

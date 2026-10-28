@@ -6,7 +6,8 @@
 
 - 已实现首版：视觉坐标与标准球局 JSON Schema、Python 基础坐标校验 / 状态转换，以及固定样例。
 - 已实现首版前端：使用 apps/web/public/model/billiards.glb 的三维球局工作台，可查看 16 个视觉检测目标、编辑本地坐标并恢复原始样例。
-- 仍未实现：FastAPI 服务、完整赛事规则引擎、物理仿真、候选搜索与清台规划、机器学习训练、离线工具链和完整的跨模块测试体系。
+- 已实现 M0 服务基础：FastAPI `/health`、显式 CORS 配置、前端真实健康状态与失败重试、pytest / Ruff 和 GitHub Actions 检查工作流。远程 CI 是否通过以实际运行结果为准。
+- 仍未实现：球局业务 API、完整赛事规则引擎、物理仿真、候选搜索与清台规划、机器学习训练、离线工具链和完整的跨模块测试体系。
 - 前端坐标映射仍需标定：模型尺寸沿用 GLB（仅米转毫米），表面高度和坐标朝向尚未与真实活动台面校准。
 
 研发规划中的目标、接口示例和模块设计不代表代码已经实现。规划中的里程碑只有在代码、测试和验收证据齐备后才能标记完成。
@@ -16,7 +17,7 @@
 | 路径 | 职责 | 当前状态 |
 |---|---|---|
 | apps/web | 球桌界面、状态输入、轨迹回放和规划结果展示 | 已实现首版三维球局工作台 |
-| apps/api | FastAPI HTTP / WebSocket 服务入口 | 规划中 |
+| apps/api | FastAPI HTTP / WebSocket 服务入口 | 已实现 /health；业务路由和 WebSocket 规划中 |
 | packages/contracts | 前后端共享的数据契约、Schema 和 API 定义 | 已实现视觉输入与标准状态首版 Schema |
 | python/billiards_core | 规则、几何、仿真适配、候选生成、评分与搜索 | 已实现基础坐标校验与状态转换；算法规划中 |
 | python/billiards_ml | 数据集、模仿学习、强化学习和策略推理适配 | 规划中 |
@@ -36,20 +37,55 @@
 
 ## 本地运行
 
-在 apps/web 目录执行：
+要求：Node `^22.18.0 || >=24.12.0`、pnpm 11.25.0、Python 3.12/3.13、uv 0.11.3。
+前端保留既有Vue RC覆盖配置，本轮未升级或重新解析前端依赖；使用已提交锁文件。
 
-    pnpm install
-    pnpm dev
+```bash
+# 仓库根目录：安装锁定的后端/检查工具依赖
+uv sync --locked
+# apps/web 目录：安装锁定的前端依赖
+pnpm install --frozen-lockfile
+```
 
-常用检查命令：
+本地服务统一通过 Spark 项目管理平台管理：
 
-    pnpm type-check
-    pnpm build
-    pnpm exec vitest run
-    pnpm exec oxlint .
-    pnpm exec eslint .
+| 项目 | 工作目录 | 启动命令 | 地址 |
+|---|---|---|---|
+| eightball-ai / web | apps/web | `pnpm dev --host localhost --port 5173` | http://localhost:5173 |
+| eightball-ai-api / api | 仓库根目录 | `.venv/bin/python -m uvicorn billiards_api.main:create_app --factory --app-dir apps/api --host localhost --port 8000` | http://localhost:8000/health |
 
-当前仓库没有提交 pnpm-lock.yaml；依赖安装后应审查解析版本，并在建立可复现环境时提交锁文件。
+前端默认连接 `http://localhost:8000`。需要覆盖时将 `apps/web/.env.example` 复制为
+`apps/web/.env.local` 并修改公开配置 `VITE_API_BASE_URL`，然后通过Spark重启web。
+API CORS配置见 [apps/api/README.md](apps/api/README.md) 和根目录 `.env.example`。
+`.env`/`.env.local`均被忽略；不要将密钥放进 `VITE_*`。
+
+前端健康状态包含连接中、已连接、未连接与重试；3秒超时。API离线不妨碍本地球局编辑。
+API健康仅表示服务存活，不表示物理或规划功能已实现。
+
+## 检查与 CI
+
+apps/web目录：
+
+```bash
+pnpm type-check
+pnpm exec vitest run
+pnpm exec oxlint .
+pnpm exec eslint .
+pnpm build
+```
+
+仓库根目录：
+
+```bash
+uv run --locked pytest -q
+uv run --locked ruff check .
+```
+
+`.github/workflows/ci.yml` 在push、pull_request及手动触发时执行以上检查。
+CI使用 `uv.lock` 和 `apps/web/pnpm-lock.yaml`，不进行隐式依赖升级。
+初始Ruff基线为E4/E7/E9/F，覆盖API与Python模块；不继承个人全局规则，也不自动修复。
+构建体积及测试依赖弃用警告仍保留。M0的最终验收需本地前后端联通且远程CI实际绿灯，
+仅存在工作流文件不能算CI已通过。
 
 ## 核心校验测试
 

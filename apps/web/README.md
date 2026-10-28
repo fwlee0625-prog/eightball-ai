@@ -6,6 +6,7 @@
 
 - 使用 Three.js GLTFLoader 加载 public/model/billiards.glb。
 - GLB 加载后仅过滤已验证名称与层级的 `Balls`（16 个 `Ball_0`–`Ball_15`）内置球子树，避免与视觉球重复显示，并在计算模型包围盒前移除；未知结构保留原样并提示警告。
+- 顶栏显示真实 API 健康状态（连接中/已连接/未连接），3秒超时，失败可重试；API离线仍可使用本地球局。
 - 使用 OrbitControls 提供三维旋转、平移和缩放。
 - 从仓库级 data/samples/table-state-001.json 读取标准球局样例，渲染 16 个视觉检测目标。
 - 点击球体可选择目标；可查看并修改 X/Y 坐标，坐标修改只存在于当前浏览器会话。
@@ -42,12 +43,15 @@ Vue 3、TypeScript、Vite、Three.js、GLTFLoader、OrbitControls、Pinia、Vue 
 - pnpm exec oxlint .：只检查，不自动修复。
 - pnpm exec eslint .：只检查，不自动修复。
 
-仓库尚未提交 pnpm-lock.yaml。新增 Three.js 后请在目标开发环境运行 pnpm install 并审查解析版本；本次没有生成锁文件或执行本地构建。
+仓库已提交 pnpm-lock.yaml；使用 `pnpm install --frozen-lockfile` 保留锁定解析。Vue RC覆盖沿用既有配置，本轮未调整版本。
+
+API默认 `http://localhost:8000`，可复制 `.env.example` 为 `.env.local` 后修改 `VITE_API_BASE_URL`（只允许HTTP(S) origin，不含路径和凭据）。该变量公开到浏览器，禁止存放密钥。默认API CORS允许localhost:5173及127.0.0.1:5173；更换端口需同步API允许列表。API启动方式见根README；本机服务通过Spark管理。
 
 ## 主要文件
 
 - src/views/TableStudioView.vue：工作台布局、球局状态和坐标编辑。
 - src/components/PoolTableScene.vue：GLB 加载、Three.js 场景、球体和视角交互。
+- src/components/ApiHealthBadge.vue / src/utils/apiHealth.ts：API健康状态、超时和重试。
 - src/utils/modelAsset.ts：精确分离模型内置球与共享资源去重释放。
 - src/data/initialTableState.ts：引用仓库级标准状态样例。
 - src/types/tableState.ts：前端对标准球局状态的类型定义。

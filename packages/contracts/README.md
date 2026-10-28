@@ -2,10 +2,12 @@
 
 ## 当前状态
 
-已实现首版视觉球坐标 Schema 与标准球局状态 Schema（版本 0.1.0）。完整的 API、击球动作、预测结果和 WebSocket 事件契约仍在规划中。
+已实现首版视觉球坐标 Schema 与标准球局状态 Schema（版本 0.1.0）。已补充M0健康响应契约及TypeScript校验器。球局业务API、击球动作、预测结果和WebSocket事件契约仍在规划中。
 
 ## 已实现文件
 
+- schemas/health-response.schema.json：`GET /health` 的严格响应结构；API版本0.1.0。
+- src/health.ts：前端健康响应类型与校验器，使用共享Schema常量；API测试同步验证生产者与Schema。
 - schemas/vision-balls.schema.json：校验视觉提供方的原始数组结构，字段为 id、x、y，可选 confidence。
 - schemas/table-state.schema.json：校验转换后的标准球局状态。
 - ../../data/samples/vision-balls-001.json：本项目提供的第一份原始坐标样例。
