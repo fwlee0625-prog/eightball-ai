@@ -5,6 +5,7 @@
 已从初始化脚手架推进到第一版球局工作台：
 
 - 使用 Three.js GLTFLoader 加载 public/model/billiards.glb。
+- GLB 加载后仅过滤已验证名称与层级的 `Balls`（16 个 `Ball_0`–`Ball_15`）内置球子树，避免与视觉球重复显示，并在计算模型包围盒前移除；未知结构保留原样并提示警告。
 - 使用 OrbitControls 提供三维旋转、平移和缩放。
 - 从仓库级 data/samples/table-state-001.json 读取标准球局样例，渲染 16 个视觉检测目标。
 - 点击球体可选择目标；可查看并修改 X/Y 坐标，坐标修改只存在于当前浏览器会话。
@@ -12,7 +13,7 @@
 - 提供俯视视角、重置视角和检测 ID 标签开关。
 - 若 GLB 加载失败，页面会显示简化球台以便继续检查坐标。
 
-这不是物理仿真或 AI 规划器。当前球体颜色仅用于区分视觉 ID，不代表真实球色或正式球号。
+这不是物理仿真或 AI 规划器。可交互球体仍由标准球局状态产生；当前球体颜色仅用于区分视觉 ID，不代表真实球色或正式球号。移除内置装饰球也不表示台呢边界、坐标方向或物理尺寸已完成标定。
 
 ## 模型与坐标限制
 
@@ -47,6 +48,7 @@ Vue 3、TypeScript、Vite、Three.js、GLTFLoader、OrbitControls、Pinia、Vue 
 
 - src/views/TableStudioView.vue：工作台布局、球局状态和坐标编辑。
 - src/components/PoolTableScene.vue：GLB 加载、Three.js 场景、球体和视角交互。
+- src/utils/modelAsset.ts：精确分离模型内置球与共享资源去重释放。
 - src/data/initialTableState.ts：引用仓库级标准状态样例。
 - src/types/tableState.ts：前端对标准球局状态的类型定义。
 - src/assets/main.css：响应式工作台样式。
