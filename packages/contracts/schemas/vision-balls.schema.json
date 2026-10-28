@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Eightball AI Vision Ball Detections",
+  "description": "Validates the raw array emitted by the vision provider. Uniqueness of id and table-bound checks are enforced by the core validator.",
+  "type": "array",
+  "minItems": 1,
+  "maxItems": 16,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "x", "y"],
+    "properties": {
+      "id": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 15,
+        "description": "Vision-provided identifier. Its meaning is not assumed to be cue-ball, solid, stripe, or canonical ball number."
+      },
+      "x": {
+        "type": "number",
+        "description": "X coordinate in millimeters, measured in the provisional table-centered coordinate frame."
+      },
+      "y": {
+        "type": "number",
+        "description": "Y coordinate in millimeters, measured in the provisional table-centered coordinate frame."
+      },
+      "confidence": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1,
+        "description": "Optional vision confidence in the inclusive range [0, 1]."
+      }
+    }
+  }
+}

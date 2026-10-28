@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Eightball AI Table State",
+  "description": "Initial normalized table-state contract. Coordinate-axis signs remain inherited from the vision source until calibration is confirmed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "table_id",
+    "state_version",
+    "source",
+    "coordinate_frame",
+    "table_geometry",
+    "balls"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "table_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source": {
+      "type": "string",
+      "minLength": 1
+    },
+    "coordinate_frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "units",
+        "origin",
+        "x_axis",
+        "y_axis",
+        "positive_x",
+        "positive_y",
+        "orientation_status"
+      ],
+      "properties": {
+        "units": {
+          "const": "mm"
+        },
+        "origin": {
+          "const": "table_center"
+        },
+        "x_axis": {
+          "const": "table_width"
+        },
+        "y_axis": {
+          "const": "table_length"
+        },
+        "positive_x": {
+          "const": "inherited_from_vision"
+        },
+        "positive_y": {
+          "const": "inherited_from_vision"
+        },
+        "orientation_status": {
+          "const": "provisional"
+        }
+      }
+    },
+    "table_geometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active_length_mm", "active_width_mm"],
+      "properties": {
+        "active_length_mm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "active_width_mm": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "balls": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "x_mm", "y_mm"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 15
+          },
+          "x_mm": {
+            "type": "number"
+          },
+          "y_mm": {
+            "type": "number"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    }
+  }
+}
