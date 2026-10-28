@@ -251,7 +251,7 @@ function resetView() {
           </div>
           <p class="calibration-note">
             <span class="note-symbol">i</span>
-            模型按包围盒自动拟合；台面表面高度与坐标朝向尚未完成标定。球体大小仅用于可视化。
+            模型尺寸沿用 GLB（米转毫米），不按活动区域自动缩放；球高按台面网格贴合，坐标朝向仍待标定。
           </p>
         </section>
 

@@ -23,6 +23,8 @@ const sceneMessage = ref('正在读取 billiards.glb…')
 
 const TABLE_WIDTH_MM = 1270
 const TABLE_LENGTH_MM = 2540
+// glTF lengths are in meters; the scene and input coordinates use millimeters.
+const GLTF_METERS_TO_MM = 1000
 const BALL_VISUAL_RADIUS_MM = 28.575
 // Approximation only: the GLB bounding box can include the rail top, not the cloth surface.
 const PROVISIONAL_SURFACE_INSET_MM = 36
@@ -105,7 +107,7 @@ function prepareModel(model: THREE.Object3D) {
   })
 }
 
-function fitAndAddModel(model: THREE.Object3D) {
+function addModel(model: THREE.Object3D) {
   if (!scene) return
 
   model.updateMatrixWorld(true)
@@ -127,25 +129,36 @@ function fitAndAddModel(model: THREE.Object3D) {
     throw new Error('模型包围盒尺寸无效')
   }
 
-  // Fit the horizontal model extents to the configured dimensions. This is an initial
-  // visual alignment, not a substitute for calibrating the playable-cloth rectangle.
-  const scaleX = TABLE_WIDTH_MM / size.x
-  const scaleZ = TABLE_LENGTH_MM / size.z
-  const scaleY = (scaleX + scaleZ) / 2
-  const fitFrame = new THREE.Group()
-  fitFrame.name = 'provisionally-fitted-table-model'
-  fitFrame.scale.set(scaleX, scaleY, scaleZ)
-  fitFrame.position.set(-center.x * scaleX, -bounds.min.y * scaleY, -center.z * scaleZ)
-  fitFrame.add(orientedModel)
-  scene.add(fitFrame)
+  // Preserve the asset's authored dimensions and proportions. Only convert units;
+  // the input-state rectangle must never determine the model's scale.
+  const modelFrame = new THREE.Group()
+  modelFrame.name = 'table-model-mm'
+  modelFrame.scale.setScalar(GLTF_METERS_TO_MM)
+  modelFrame.position.set(
+    -center.x * GLTF_METERS_TO_MM,
+    -bounds.min.y * GLTF_METERS_TO_MM,
+    -center.z * GLTF_METERS_TO_MM,
+  )
+  modelFrame.add(orientedModel)
+  scene.add(modelFrame)
 
-  tableSurfaceY = Math.max(0, size.y * scaleY - PROVISIONAL_SURFACE_INSET_MM)
-  fitFrame.traverse((object) => {
-    if (object instanceof THREE.Mesh) {
-      object.castShadow = true
-      object.receiveShadow = true
-    }
-  })
+  // Retain the estimate only for assets without an identifiable cloth surface.
+  tableSurfaceY = Math.max(0, size.y * GLTF_METERS_TO_MM - PROVISIONAL_SURFACE_INSET_MM)
+  modelFrame.updateMatrixWorld(true)
+  const cloth = modelFrame.getObjectByName('TableSurface')
+  if (cloth) {
+    const clothBounds = new THREE.Box3().setFromObject(cloth)
+    const clothCenter = clothBounds.getCenter(new THREE.Vector3())
+    const surfaceProbe = new THREE.Raycaster(
+      new THREE.Vector3(clothCenter.x, clothBounds.max.y + 1, clothCenter.z),
+      new THREE.Vector3(0, -1, 0),
+    )
+    const hit = surfaceProbe.intersectObject(cloth, true)[0]
+    if (hit && Number.isFinite(hit.point.y)) tableSurfaceY = hit.point.y
+    else console.warn('TableSurface 中心未检测到表面，球高使用临时估计')
+  } else {
+    console.warn('模型没有 TableSurface 网格，球高使用临时估计')
+  }
 }
 
 function createFallbackTable() {
@@ -220,7 +233,8 @@ function makeBallLabel(ballId: number) {
 
 function clearBalls() {
   if (!ballGroup) return
-  for (const child of [...ballGroup.children]) {
+  while (ballGroup.children.length > 0) {
+    const child = ballGroup.children[ballGroup.children.length - 1]!
     ballGroup.remove(child)
     if (child instanceof THREE.Sprite) {
       child.material.map?.dispose()
@@ -383,8 +397,8 @@ onMounted(async () => {
     try {
       const gltf = await loader.loadAsync(import.meta.env.BASE_URL + 'model/billiards.glb')
       prepareModel(gltf.scene)
-      fitAndAddModel(gltf.scene)
-      setStatus('ready', '模型已载入；比例与台面高度仍需标定')
+      addModel(gltf.scene)
+      setStatus('ready', '模型已载入；尺寸沿用 GLB，台面高度仍需标定')
     } catch (error) {
       console.error('Unable to load /model/billiards.glb', error)
       createFallbackTable()

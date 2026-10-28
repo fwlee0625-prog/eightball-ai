@@ -1,8 +1,11 @@
 import { defineComponent, nextTick } from 'vue'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 
 import TableStudioView from '../views/TableStudioView.vue'
+
+const resetSceneView = vi.fn<() => void>()
+const setTopDownView = vi.fn<(enabled: boolean) => void>()
 
 const PoolTableSceneStub = defineComponent({
   name: 'PoolTableScene',
@@ -12,6 +15,9 @@ const PoolTableSceneStub = defineComponent({
     showIds: { type: Boolean, default: true },
   },
   emits: ['select-ball', 'model-status'],
+  setup(_props, { expose }) {
+    expose({ resetView: resetSceneView, setTopDownView })
+  },
   template: '<div data-test="pool-table-scene-stub" />',
 })
 
@@ -26,6 +32,9 @@ function mountStudio() {
 }
 
 describe('TableStudioView', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
   it('renders the table workspace and all 16 detections', () => {
     const wrapper = mountStudio()
     expect(wrapper.text()).toContain('球局工作台')
@@ -76,5 +85,18 @@ describe('TableStudioView', () => {
 
     expect(wrapper.text()).toContain('原始样例 · 只读来源')
     expect(wrapper.text()).toContain('STATE v1')
+    expect(resetSceneView).toHaveBeenCalledOnce()
+    expect(scene.props('selectedBallId')).toBeNull()
+  })
+
+  it('forwards view controls to the scene', async () => {
+    const wrapper = mountStudio()
+    const buttons = wrapper.findAll('.tool-button')
+    await buttons[0]!.trigger('click')
+    expect(setTopDownView).toHaveBeenLastCalledWith(true)
+    await buttons[0]!.trigger('click')
+    expect(setTopDownView).toHaveBeenLastCalledWith(false)
+    await buttons[1]!.trigger('click')
+    expect(resetSceneView).toHaveBeenCalledOnce()
   })
 })
