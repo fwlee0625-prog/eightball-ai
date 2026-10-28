@@ -22,6 +22,7 @@ def read_cors_origins() -> list[str]:
             if (
                 url.scheme not in ("http", "https")
                 or not url.hostname
+                or "*" in url.hostname
                 or url.username is not None
                 or url.password is not None
                 or url.path

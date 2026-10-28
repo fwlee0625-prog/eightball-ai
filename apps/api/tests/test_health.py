@@ -71,7 +71,7 @@ def test_explicit_origin_configuration(monkeypatch, origins):
 
 @pytest.mark.parametrize("raw", [
     "", "not-json", '"http://localhost:5173"', '[1]', '["*"]',
-    '["ftp://localhost"]', '["http://localhost/path"]',
+    '["ftp://localhost"]', '["http://*"]', '["https://*.example.com"]', '["http://localhost/path"]',
     '["http://user:password@localhost"]', '["http://localhost:99999"]',
     '["http://localhost:0"]', '["http://localhost?query=1"]',
 ])

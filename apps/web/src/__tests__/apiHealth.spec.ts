@@ -26,7 +26,7 @@ describe('API health contract', () => {
   })
 
   it.each(['', 'invalid', 'ftp://localhost', 'http://user:pass@localhost',
-    'http://localhost/path', 'http://localhost?x=1'])('rejects invalid API configuration %s', async (url) => {
+    'http://localhost/path', 'http://localhost?x=1', 'http://*'])('rejects invalid API configuration %s', async (url) => {
     const fetcher = vi.fn<typeof fetch>()
     vi.stubGlobal('fetch', fetcher)
     await expect(requestApiHealth(url, signal)).rejects.toThrow('API 地址配置无效')

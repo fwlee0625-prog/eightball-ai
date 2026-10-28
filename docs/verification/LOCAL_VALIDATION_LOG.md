@@ -687,3 +687,10 @@ pnpm build
 - 通过connector下载实际job日志，保存 `/tmp/eightball-r010/ci-python.log`、`ci-web.log`；保留httpx弃用与构建体积警告。pnpm安装步骤额外有v10安装布局迁移提示，但实际已切换至11.25.0，锁文件安装和后续检查成功，没有为消警改变依赖。
 - **M0 最终验收：PASS。** 已有单仓库/前端、API /health、前后端真实CORS联通、错误配置校验、pytest/Ruff、锁定依赖、配置示例/启动日志及远程CI绿灯。M0阶段清单据此更新为已验收；后续文档提交只记录验收证据，不改变本次已通过的实现。
 - 仍不放行几何标定、业务API、物理仿真或AI规划；M1尚未完整验收。保留全部R-000至R-009及本轮提交前NOT RUN历史，以上追加结果更新当前验收状态。
+
+**R-010 最终复核补充：origin 通配主机边界（约22:17）**
+
+- 最终复核发现带协议的 `http://*` / `https://*.example.com` 应与文档约定一致明确拒绝，而非当作普通主机名接受。补充API与前端URL校验，以及API2项、前端1项回归；正常localhost默认配置不变。这是本轮新配置代码的边界完善，不修改既有依赖或领域代码。
+- 重新实际执行：根目录 `.venv/bin/python -m pytest -q` 退出0（**30 passed, 1 warning**）、`.venv/bin/ruff check .`退出0；apps/web按顺序type-check、Vitest、Oxlint、ESLint、build全部退出0，**5文件48项通过**，45 modules、built in337ms、chunk657.55kB/gzip168.78kB；体积与httpx警告保留。完整命令和输出 `/tmp/eightball-r010/wildcard-checks.json`、wildcard-0.log至wildcard-6.log。
+- Spark重启API后浏览器刷新，最终代码仍显示API已连接；截图api-connected-final.png、页面文本browser-final-after-review.txt。无脚本启动服务。本轮最后验证基线以这组30/48项结果为准，前面的28/47项记录保留其执行时的真实结果。
+- 文档提交b033516的远程CI运行40704224824也已实际success；以下新边界变更的远程CI在推送后核验，不能由此前绿灯推断。

@@ -8,7 +8,7 @@ export async function requestApiHealth(baseUrl: string, signal: AbortSignal): Pr
     throw new Error('API 地址配置无效，请检查 VITE_API_BASE_URL。')
   }
   if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password ||
-    base.search || base.hash || base.pathname !== '/') {
+    base.search || base.hash || base.pathname !== '/' || base.hostname.includes('*')) {
     throw new Error('API 地址配置无效，请使用不含路径或凭据的 HTTP(S) 地址。')
   }
   const response = await fetch(new URL('/health', base), { signal, credentials: 'omit' })
