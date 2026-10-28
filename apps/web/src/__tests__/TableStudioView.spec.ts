@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 
 import TableStudioView from '../views/TableStudioView.vue'
+import type { TableState } from '../types/tableState'
 
 const resetSceneView = vi.fn<() => void>()
 const setTopDownView = vi.fn<(enabled: boolean) => void>()
@@ -56,6 +57,50 @@ describe('TableStudioView', () => {
     expect(wrapper.text()).toContain('本地修改 · 未保存')
     expect((wrapper.find('input[name="x"]').element as HTMLInputElement).value).toBe('10')
     expect((wrapper.find('input[name="y"]').element as HTMLInputElement).value).toBe('20')
+    expect(wrapper.text()).toContain('STATE v2')
+  })
+
+  it('allows editing only X while preserving the original Y precision', async () => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    scene.vm.$emit('select-ball', 0)
+    await nextTick()
+
+    const initialState = scene.props('state') as TableState
+    const originalY = initialState.balls.find((ball) => ball.id === 0)?.y_mm
+    expect(originalY).toBeDefined()
+    expect(wrapper.find('input[name="x"]').attributes('step')).toBe('any')
+    expect(wrapper.find('input[name="y"]').attributes('step')).toBe('any')
+
+    await wrapper.find('input[name="x"]').setValue('10')
+    await wrapper.find('form').trigger('submit')
+    await nextTick()
+
+    const updatedState = scene.props('state') as TableState
+    const updatedBall = updatedState.balls.find((ball) => ball.id === 0)
+    expect(updatedBall?.x_mm).toBe(10)
+    expect(updatedBall?.y_mm).toBe(originalY)
+    expect(wrapper.text()).toContain('STATE v2')
+  })
+
+  it('allows editing only Y while preserving the original X precision', async () => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    scene.vm.$emit('select-ball', 0)
+    await nextTick()
+
+    const initialState = scene.props('state') as TableState
+    const originalX = initialState.balls.find((ball) => ball.id === 0)?.x_mm
+    expect(originalX).toBeDefined()
+
+    await wrapper.find('input[name="y"]').setValue('20')
+    await wrapper.find('form').trigger('submit')
+    await nextTick()
+
+    const updatedState = scene.props('state') as TableState
+    const updatedBall = updatedState.balls.find((ball) => ball.id === 0)
+    expect(updatedBall?.x_mm).toBe(originalX)
+    expect(updatedBall?.y_mm).toBe(20)
     expect(wrapper.text()).toContain('STATE v2')
   })
 

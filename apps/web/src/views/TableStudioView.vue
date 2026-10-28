@@ -292,11 +292,11 @@ function resetView() {
               <form class="coordinate-form" @submit.prevent="applyCoordinateEdit">
                 <label class="coordinate-field">
                   <span>X 坐标 <small>MM</small></span>
-                  <input v-model="coordinateDraft.x" name="x" type="number" step="0.1" :min="-xLimit" :max="xLimit" inputmode="decimal" />
+                  <input v-model="coordinateDraft.x" name="x" type="number" step="any" :min="-xLimit" :max="xLimit" inputmode="decimal" />
                 </label>
                 <label class="coordinate-field">
                   <span>Y 坐标 <small>MM</small></span>
-                  <input v-model="coordinateDraft.y" name="y" type="number" step="0.1" :min="-yLimit" :max="yLimit" inputmode="decimal" />
+                  <input v-model="coordinateDraft.y" name="y" type="number" step="any" :min="-yLimit" :max="yLimit" inputmode="decimal" />
                 </label>
                 <p class="coordinate-boundary">X：−{{ xLimit }} 至 {{ xLimit }} mm<br />Y：−{{ yLimit }} 至 {{ yLimit }} mm</p>
                 <p v-if="coordinateError" class="coordinate-error" role="alert">{{ coordinateError }}</p>
