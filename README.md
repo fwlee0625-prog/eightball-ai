@@ -60,6 +60,7 @@
 ## 开发约定
 
 - 先读根目录 AGENTS.md，再读目标模块内的 AGENTS.md 和 README.md。
+- 每次 Git commit 的提交说明必须使用中文，具体格式遵守根目录 AGENTS.md 的“Git 提交规范”。
 - 本地验证统一记录在 docs/verification/LOCAL_VALIDATION_LOG.md；未在真实环境执行的检查不得声称通过。
 - 以实际代码和测试为准；不把规划文档中的接口或功能当作已存在的实现。
 - 坐标系、单位、规则版本、状态版本和物理参数必须显式定义，不得靠隐式约定互相猜测。
