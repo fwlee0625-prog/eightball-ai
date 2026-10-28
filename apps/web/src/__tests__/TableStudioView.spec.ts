@@ -225,6 +225,9 @@ describe('TableStudioView', () => {
     const importInput = wrapper.get('input[name="state-import"]')
     const altered = JSON.parse(JSON.stringify(initial)) as TableState
     altered.table_geometry.active_width_mm = 1000
+    // Keep positions valid under the imported geometry, so this tests the
+    // workspace/table mismatch rather than the parser's bounds guard.
+    altered.balls = [{ id: 7, x_mm: 0, y_mm: 0 }]
     Object.defineProperty(importInput.element, 'files', {
       configurable: true,
       value: [{
