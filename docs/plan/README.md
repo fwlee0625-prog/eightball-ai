@@ -9,9 +9,12 @@
 
 ## 当前仓库实现边界
 
-截至当前 main 分支，除 apps/web 初始化脚手架和 docs/plan 研发规划外，已完成第一小步：packages/contracts 中的视觉输入与标准球局 JSON Schema、python/billiards_core 中的坐标校验 / 状态转换，以及一组固定样例和单元测试。
+截至当前 main 分支，已完成两项基础工作：
 
-apps/api、完整赛事规则、物理仿真、候选评分与搜索、python/billiards_ml、scripts 和跨模块集成测试仍未实现。M0 计划中的 FastAPI /health、CI 等验收项目前尚未在仓库中看到对应实现。只有在功能已实现、相关测试实际运行并留下验收证据后，才能将其标记为完成。
+1. packages/contracts 中的视觉输入与标准球局 JSON Schema、python/billiards_core 中的坐标校验 / 状态转换，以及一组固定样例和单元测试。
+2. apps/web 第一版三维球局工作台：加载用户提供的 billiards.glb、渲染 16 个视觉检测目标、提供视角切换、目标选择和本地坐标编辑。
+
+apps/api、完整赛事规则、物理仿真、候选评分与搜索、python/billiards_ml、scripts 和跨模块集成测试仍未实现。前端模型拟合与台面表面高度仍是临时估计；本地坐标编辑不写回样例或后端。M0 计划中的 FastAPI /health、CI 等验收项目前尚未在仓库中看到对应实现。只有在功能已实现、相关测试实际运行并留下验收证据后，才能将其标记为完成。
 
 本文档里的历史接口、目录、指标和技术方案仍需按实际代码理解；已提交的正式初版契约以 packages/contracts/schemas 中的 Schema 为准。
 
