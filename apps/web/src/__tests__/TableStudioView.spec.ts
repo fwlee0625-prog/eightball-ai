@@ -159,7 +159,6 @@ describe('TableStudioView', () => {
     expect(wrapper.text()).toContain('原始样例 · 只读来源')
   })
 
-
   it('imports valid standard JSON, replaces the scene state, and increments the session version', async () => {
     const wrapper = mountStudio()
     const scene = wrapper.findComponent(PoolTableSceneStub)
@@ -171,7 +170,7 @@ describe('TableStudioView', () => {
     await nextTick()
     expect(wrapper.text()).toContain('STATE v2')
 
-    const fixture = structuredClone(scene.props('state') as TableState)
+    const fixture = JSON.parse(JSON.stringify(scene.props('state'))) as TableState
     fixture.state_version = 1
     fixture.balls = [{ id: 7, x_mm: 10.125, y_mm: -20.25, confidence: 0.5 }]
     const file = {
@@ -201,7 +200,7 @@ describe('TableStudioView', () => {
     scene.vm.$emit('select-ball', 0)
     await nextTick()
     const initial = scene.props('state') as TableState
-    const bad = structuredClone(initial)
+    const bad = JSON.parse(JSON.stringify(initial)) as TableState
     bad.balls[0]!.x_mm = 700
     const input = wrapper.get('input[name="state-import"]')
     Object.defineProperty(input.element, 'files', {
@@ -224,7 +223,7 @@ describe('TableStudioView', () => {
     const scene = wrapper.findComponent(PoolTableSceneStub)
     const initial = scene.props('state') as TableState
     const importInput = wrapper.get('input[name="state-import"]')
-    const altered = structuredClone(initial)
+    const altered = JSON.parse(JSON.stringify(initial)) as TableState
     altered.table_geometry.active_width_mm = 1000
     Object.defineProperty(importInput.element, 'files', {
       configurable: true,

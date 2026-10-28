@@ -37,7 +37,7 @@ describe('standard table-state JSON import', () => {
       /"x_mm":-104\.72715759277344/, '"x_mm":1e999',
     )],
   ])('rejects %s', (_, value) => {
-    expect(() => parseTableStateJson(value)).toThrow()
+    expect(() => parseTableStateJson(value)).toThrow(Error)
   })
 
   it.each([
@@ -97,7 +97,7 @@ describe('standard table-state JSON import', () => {
   ])('rejects %s', (_name, mutate) => {
     const input = fixture()
     mutate(input)
-    expect(() => parse(input)).toThrow()
+    expect(() => parse(input)).toThrow(Error)
   })
 
   it('never mutates the parsed input or invents a ball identity', () => {
