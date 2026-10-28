@@ -540,3 +540,68 @@ pnpm build
 5. 若能解析真实 GLB，记录过滤前后包围盒和独立球数、模型 SHA-256；只做只读对比，不替换源模型。记录截图/日志证据路径。
 
 **结果记录：** Codex 核对初始 `git status --short --branch` 与 HEAD、保存已有改动，执行后追加 R-008（命令、真实退出码、浏览器结果、证据和遗留问题）；任何未执行项保持 NOT RUN 或 BLOCKED，不要改写历史记录。
+
+
+## 13. 本地验证追加记录
+
+#### R-008：GLB 内置球过滤（真实资产通过，异常结构保护存在缺口）
+
+- 日期/时区：2026-10-28，Asia/Shanghai，约21:47–21:56；执行者：Codex。环境：macOS 15.7.7 (24G720)、Node v24.12.0、pnpm 11.25.0；Three.js 沿用已安装依赖，没有安装、升级或改写锁文件。
+- 开始前读取根目录与 apps/web 的 AGENTS.md / README.md、docs/AGENTS.md 和完整验证交接记录（历史内容沿用本聊天上一轮读取，本轮重读 R-006 至 V-008）。`git status --short --branch` 退出0，仅输出 `## fix/single-axis-coordinate-step-20261028...origin/fix/single-axis-coordinate-step-20261028`，工作区干净。此前 R-007 内容已包含在当前提交历史中，没有遗留未提交改动。
+- 分支：`fix/single-axis-coordinate-step-20261028`；HEAD：`a69e02603e1b7ac26ebec3aacd5929f17389eebf`。通过 GitHub connector 的 fetch_commit 获取该远程提交及差异，fetch_pr 确认 PR #1 当前 head_sha 同上；本地 origin 对应引用亦同。`git rev-list --left-right --count HEAD...origin/fix/single-axis-coordinate-step-20261028` 退出0、输出 `0 0`。目标对象及新增 `src/utils/modelAsset.ts`、`src/__tests__/modelAsset.spec.ts` 已在本地，无需切换、拉取或更新工作树。
+- 本轮仓库内只追加本文档；未修改业务源码、测试逻辑、GLB、依赖或坐标映射，没有暂存、提交、推送、重置、清理或自动修复。临时验证脚本和证据仅放 `/tmp/eightball-r008/`。
+
+**自动化检查：按要求顺序，cwd=apps/web**
+
+| 实际命令 | 真实退出码 | 结果与关键输出 | 证据 |
+|---|---|---|---|
+| `pnpm type-check` | 0 | PASS；vue-tsc --build，无类型错误 | `/tmp/eightball-r008/1.log` |
+| `pnpm exec vitest run` | 0 | PASS；3文件、27项全部通过，无未处理异常；含新增7项 modelAsset 测试 | `/tmp/eightball-r008/2.log` |
+| `pnpm exec oxlint .` | 0 | PASS；无诊断输出 | `/tmp/eightball-r008/3.log` |
+| `pnpm exec eslint .` | 0 | PASS；无诊断输出 | `/tmp/eightball-r008/4.log` |
+| `pnpm build` | 0 | PASS（有警告）；Vite8.3.5、39 modules、built in318ms；TableStudioView655.18kB、gzip167.27kB | `/tmp/eightball-r008/5.log` |
+
+- 完整命令/退出码/输出：`/tmp/eightball-r008/checks.json`。保留原有 `Some chunks are larger than 500 kB after minification` 警告，未更改警告阈值。
+- 为逐项核对新增测试，额外执行 `pnpm exec vitest run src/__tests__/modelAsset.spec.ts --reporter=verbose`，退出0，1文件7项通过（输出已由工具实际返回）：①精确16球分离且先于包围盒；②无直接Balls；③不完整/未知直接子项；④重复名称及嵌套Balls组；⑤多个顶层Balls；⑥共享几何/材质/纹理在重复调用中只释放一次且不提前释放；⑦空场景与Sprite释放。注意④覆盖“Balls组自身嵌套”，没有覆盖下述“Ball_0内部额外嵌套网格”。
+
+**真实 GLB 离线验证：PASS**
+
+- 命令（cwd=仓库根）：`node /tmp/eightball-r008/geometry.mjs` 最终退出0；数据 `/tmp/eightball-r008/geometry.json`，脚本在同目录。脚本只读原始GLB，重建全部33个primitive的POSITION/索引和全部节点TRS；检查资产无matrix节点且每mesh只有一个primitive。纹理解码不在离线几何脚本中执行，纹理由浏览器验收。
+- 实际导入生产 `detachEmbeddedBalls` / `createSceneResourceDisposer` 函数；提取实际 `addModel`，仅移除参数的TypeScript类型后执行，不改变计算逻辑。对照源码 `PoolTableScene.vue:403` 过滤调用在 `addModel(gltf.scene)` 之前，且addModel内部才测包围盒。
+- 原模型根子项为 `Table`、`Balls`；Table包含TableSurface；Balls有完整16个直接Mesh：Ball_0至Ball_15。原始共33个Mesh，过滤后17个，分离子树16个；result=`removed`，detached.parent=null，根只剩Table。Table与TableSurface对象及其精确世界包围盒在过滤前后完全不变。
+
+| 范围（GLB原生米，顺序X/Y/Z） | 过滤前（Three.js默认Box3） | 过滤后 |
+|---|---|---|
+| min | (-1.435375016059, 0.007013430864, -0.785022501812) | 相同 |
+| max | (1.438208507657, 0.888215995064, 0.779395939236) | (1.438208507657, 0.870086408914, 0.779395939236) |
+| size | (2.873583523716, 0.881202564201, 1.564418441048) | (2.873583523716, 0.863072978051, 1.564418441048) |
+
+- 默认包围盒最高点下降 `0.018129586150` 米，即约18.129586mm，水平外框不变。逐顶点精确包围盒过滤前maxY=`0.888215986400`，过滤后=`0.870086408914`；与默认Box3的微小差异来自局部AABB变换近似，不能混用两种精度。
+- 执行实际addModel后统一scale=`(1000,1000,1000)`；旋转后场景外框size=`(1564.418441048,863.072978051,2873.583523716)`mm，min=`(-782.209220524,0,-1436.791761858)`，max=`(782.209220524,863.072978051,1436.791761858)`。没有重新拟合到1270×2540，比例保留。TableSurface中心射线高度=`822.001184312`mm，无回退警告。
+- 离线脚本另对重建模型与分离子树的66个几何/材质对象监听dispose，调用两次后各只释放一次，PASS；重建材质不代表资产原材质共享关系，真实共享纹理的行为以新增合成单元测试为证，不冒充GPU内存泄漏测量。
+- 临时脚本初次生成时截取旧脚本的范围错误，未包含GLB解码变量，Node实际报 `ReferenceError: g is not defined`（Node进程退出1；外层随后cat日志退出0）。错误保存在 `geometry-first-error.log`；只修正临时脚本后上述真实命令退出0，产品文件未改。这是验证脚本错误，不算产品失败。
+- GLB SHA-256仍为 `39f545f0f092c569b14d83c5eb1885a574484e8a4c04612cbfd05349101e0e0b`；锁文件仍为 `3dc9245952150f3ecf94a4c4781fc6709fb497c6951f0a58ddd770a26c3eb2ba`。Python hashlib实际复核，证据 `review-before-log.json`。
+
+**真实浏览器验收：功能PASS；几何语义NEEDS REVIEW**
+
+- Spark `get_terminals({project:"p_01047fdd"})` 确认现有web终端running、监听5173；沿用平台管理的 `pnpm dev --host localhost --port 5173`，无需再次启动。Codex内置真实浏览器打开 `http://localhost:5173/`，刷新后观察“模型加载中”→“模型已载入”，没有fallback。浏览器操作非shell命令，退出码为N/A。
+- 开启CDP Network观察后刷新：GLB `http://localhost:5173/model/billiards.glb` 返回HTTP200 OK、mimeType=model/gltf-binary、[::1]:5173、fromDiskCache=false、fromServiceWorker=false。network.json与network-final.json均hasMore=false、truncated=false，捕获期间无Network.loadingFailed。
+- 俯视与斜视中内置三角球堆消失；关闭ID后可见16个独立视觉球，开启后标签恢复，页面检测数16/16。台呢纹理、库边、六袋口视觉位置/袋网、外框、支架可见；没有发现此次过滤导致桌体缺失或贴图丢失。此结论限当前截图可见部分，不是厂家模型的完整几何认证。
+- 画布实际拖拽后视角改变，滚轮向上后模型放大，“重置视角”恢复默认斜视；俯视/切回3D切换有效。证据：`top.png`、`ids-off.png`、`oblique.png`、`rotated.png`、`zoom.png`、`reset.png`（均位于 `/tmp/eightball-r008/`）。
+- 实际点击视觉球选中ID0：初值X=`-104.72715759277344`、Y=`-515.1940307617188`；只改X=10并点击应用，STATE v1→v2，Y完整保持原值、两轴stepMismatch=false。点击恢复原始样例后v1、清除选择、恢复默认视角；再俯视选ID0，双轴精确恢复原值。证据 `interactions.json`、`edit.png`、`final.png`。
+- Console采样 `console.json`：无error，捕获两次相同既有警告（初次加载和刷新各一次）：`THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead.`，与R-002已记录警告一致；本轮未调整阴影设置。没有捕获未知Balls结构警告、纹理/shader异常或WebGL上下文丢失。
+- 视觉球与真实内包边、袋口、轴向及物理高度的准确对应仍为NEEDS REVIEW；俯视部分视觉球靠近库边，不能据去除装饰球断言坐标已标定。本轮没有改映射，也未执行精确几何标定或长期GPU内存压力测试。
+
+**发现的问题：未知嵌套网格会随Balls被误过滤（FAIL，建议下一轮修复）**
+
+- 文件：`apps/web/src/utils/modelAsset.ts:23–26`；循环只验证16个直接子Mesh的类型与名称，没有检查这些Mesh是否包含额外子节点。第21行注释声称拒绝nested unknowns，文件头/README也声明未知结构保留，但该路径实际未覆盖。
+- 最小复现（仅临时合成Three.js场景，未修改测试或模型）：构造根Table+Balls，Balls下16个名为Ball_0至Ball_15的Mesh；再在Ball_0下添加名为UnexpectedDecoration的Mesh；调用真实detachEmbeddedBalls(root)。
+- 实际命令：`node /tmp/eightball-r008/nested-structure.mjs`，退出 **1**（脚本针对约定失败主动设置退出码，不是异常崩溃）。原始输出：`expected="unexpected-structure; root should retain Balls"`，`actual="removed"`，`remainingRoots=["Table"]`，`unknownStillInScene=false`，`result="FAIL"`。证据 `nested-structure.mjs`、`nested-structure.json`。
+- 影响：未来资产在已知球Mesh下嵌入其它装饰或桌体节点时，仍会整树分离，且不会触发unexpected-structure警告。当前原始GLB不含这种嵌套结构，真实资产过滤不受此问题影响。
+- 给ChatGPT的修复建议：在确认16个已知Mesh时同时拒绝额外后代（或实施等价的完整结构校验），并补“Ball_0下未知节点”的回归测试；保留现有未知结构不删除的行为与资源释放断言。本轮严格不修复。
+
+**本轮结论与交接**
+
+- 五项规定自动化检查PASS；新增7项单元测试PASS；当前真实GLB过滤、包围盒及浏览器主要交互PASS；共享资源合成测试PASS；无新的渲染错误或网络失败。
+- 总体 **FAIL（异常结构保护补充验证失败）**；几何标定独立保持 **NEEDS REVIEW**；无工具/依赖/浏览器类BLOCKED。建议先修复上述嵌套结构保护，再重跑7项及新回归；构建体积与阴影警告可独立安排，不需本轮改变模型或坐标。
+- 验证证据位于 `/tmp/eightball-r008/`，为本机临时文件，可能被系统清理，关键结果已内联保留。本轮仅追加本验证文档，未修改源码/测试/资产、未创建提交；HEAD仍为a69e026，分支不变。
