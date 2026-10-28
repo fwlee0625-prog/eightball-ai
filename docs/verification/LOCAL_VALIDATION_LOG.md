@@ -694,3 +694,8 @@ pnpm build
 - 重新实际执行：根目录 `.venv/bin/python -m pytest -q` 退出0（**30 passed, 1 warning**）、`.venv/bin/ruff check .`退出0；apps/web按顺序type-check、Vitest、Oxlint、ESLint、build全部退出0，**5文件48项通过**，45 modules、built in337ms、chunk657.55kB/gzip168.78kB；体积与httpx警告保留。完整命令和输出 `/tmp/eightball-r010/wildcard-checks.json`、wildcard-0.log至wildcard-6.log。
 - Spark重启API后浏览器刷新，最终代码仍显示API已连接；截图api-connected-final.png、页面文本browser-final-after-review.txt。无脚本启动服务。本轮最后验证基线以这组30/48项结果为准，前面的28/47项记录保留其执行时的真实结果。
 - 文档提交b033516的远程CI运行40704224824也已实际success；以下新边界变更的远程CI在推送后核验，不能由此前绿灯推断。
+
+**R-010 最终代码远程验收追加**
+
+- 通配主机边界修复提交 `34b54953e966543a77cfafd7293b3c749b4788d0` 已普通推送。GitHub实际运行 **40704557272 / run number6** 已completed/success，Python/Web作业均成功；日志确认Python30项、前端48项通过，Ruff及前端五项检查成功，原有警告保留。地址：https://github.com/fwlee0625-prog/eightball-ai/actions/runs/40704557272 。
+- 本轮最终实现及远程CI均 **PASS**，M0完成；本次后续提交仅追加验收文档。主分支未合并，开发分支现有提交全部保留。下一里程碑为M1，仍需几何标定、数据导入及轨迹回放。
