@@ -678,3 +678,12 @@ pnpm build
 - .github/workflows/ci.yml配置push/pull_request/workflow_dispatch，contents:read、10分钟预算；Python使用uv0.11.3和Python3.13、uv sync --locked、pytest与Ruff；Web固定Node24.12.0/pnpm11.25.0，以已有pnpm锁文件安装并执行五项检查。未部署或合并PR。
 - 本地实现与验证PASS；本记录写入时远程工作流尚未运行，**M0最终验收暂为NOT RUN（远程CI绿灯待验证）**。后续在本记录后追加实际远程运行结果，不把工作流存在当作CI通过。
 - 已知限制：无生产部署/鉴权，API仅健康接口；Vue RC覆盖、既有体积/阴影警告仍在；几何标定保持NEEDS REVIEW。M1轨迹导入/回放和M2物理仿真未因此完成。临时证据可能被系统清理，关键结果已内联。
+
+**R-010 远程 CI 实际验收追加（2026-10-28，Asia/Shanghai约22:14）**
+
+- `git fetch origin fix/single-axis-coordinate-step-20261028` 退出0；提交前 `git rev-list --left-right --count HEAD...origin/fix/single-axis-coordinate-step-20261028` 输出2/0，确认无远程独有提交。普通提交并推送成功（退出0），未强推：M0实现提交 `5c1733cfa992d2b4dd0386bc2aa7b3e0a07c5071`，说明 `feat: 补齐 M0 健康服务与工程检查`。本轮此前的b3f46f1及已有946aa17均保留并一起推送。
+- GitHub connector实际读取 CI run **40703817062 / run number2**，status=completed、conclusion=success；地址 https://github.com/fwlee0625-prog/eightball-ai/actions/runs/40703817062 。该pull_request运行测试的是5c1733c与main的临时合并版本1892336，不是执行了真实合并，PR仍未合并。
+- Python job **122870446475** success：Ubuntu26.04.1，实际CPython3.13.12，uv0.11.3；uv sync --locked、Ruff、pytest全部成功，**28 passed, 1 warning**。Web job **122870445863** success：Node24.12.0、pnpm11.25.0；frozen-lockfile安装、五项检查全部成功，**5 files / 47 passed**。不是仅凭本地结果推测远程通过。
+- 通过connector下载实际job日志，保存 `/tmp/eightball-r010/ci-python.log`、`ci-web.log`；保留httpx弃用与构建体积警告。pnpm安装步骤额外有v10安装布局迁移提示，但实际已切换至11.25.0，锁文件安装和后续检查成功，没有为消警改变依赖。
+- **M0 最终验收：PASS。** 已有单仓库/前端、API /health、前后端真实CORS联通、错误配置校验、pytest/Ruff、锁定依赖、配置示例/启动日志及远程CI绿灯。M0阶段清单据此更新为已验收；后续文档提交只记录验收证据，不改变本次已通过的实现。
+- 仍不放行几何标定、业务API、物理仿真或AI规划；M1尚未完整验收。保留全部R-000至R-009及本轮提交前NOT RUN历史，以上追加结果更新当前验收状态。

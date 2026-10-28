@@ -53,3 +53,7 @@ API返回由Pydantic模型约束，测试用共享Schema校验生产者；前端
 
 球局提交、推荐、规划任务与WebSocket接口仍是设计草案。领域规则、几何、仿真和搜索属于
 `python/billiards_core`；本模块仅负责HTTP边界、输入校验、任务编排和结果传输。
+
+官方接口核对（2026-10-28）：[FastAPI 首步](https://fastapi.tiangolo.com/tutorial/first-steps/)、
+[测试](https://fastapi.tiangolo.com/tutorial/testing/)、[CORS](https://fastapi.tiangolo.com/tutorial/cors/)、
+[uv锁定与同步](https://docs.astral.sh/uv/concepts/projects/sync/)。以uv.lock实际安装版本和测试结果为准。
