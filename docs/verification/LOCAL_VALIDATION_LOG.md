@@ -713,3 +713,12 @@ pnpm build
 - **测试任务（cwd=apps/web）：** 依次执行 `pnpm type-check`、`pnpm exec vitest run`、`pnpm exec oxlint .`、`pnpm exec eslint .`、`pnpm build`，逐项保存真实退出码、输出、测试数量。重点核查已有 UI 测试不回归、新增导入工具及 UI 测试通过。
 - **真实浏览器（同一页、无后端参与）：** ① 上传 `data/samples/table-state-001.json`：状态版本递增、球数仍为16、可选中球和恢复样例；② 上传自己构造的 1 个或 2 个球的合法同尺寸 v0.1.0 JSON：渲染球数变化、无跨帧/规则身份推断；③ 非法 JSON、重复 ID、超界、空 balls、错误版本、缺字段、不同活动长宽、大于 1MiB：报错易懂、状态及选球不变；④ 文件选择取消、文件读取失败（若可模拟）、读入途中恢复样例的防竞态；⑤ 查看 Console/Network，确认导入不访问业务 API、不修改资产；⑥ 手机宽度与键盘文件选择、错误提示可读。
 - **预期报告：** R-011 记录 Git/环境、五条命令及退出码、原始 JSON 文件名与关键状态前后对比、浏览器截图/日志位置、PASS/FAIL/BLOCKED/NEEDS REVIEW 和未解决问题。保留 R-000 至 R-010；不修改 GLB/依赖/物理参数，不把 M1 总体标记完成。
+
+
+**V-011 远程 CI 实际结果（本地浏览器仍待验证）**
+
+- 基线代码提交 `8a96e28a29fca60a4f9985f2efdce007c4899f2a`，由 GitHub Actions 的 push 触发，运行 ID **40709542202**：https://github.com/fwlee0625-prog/eightball-ai/actions/runs/40709542202 ，status=completed、conclusion=success。该结果来自 GitHub API 和真实 job 日志，不是本地命令或浏览器验证。
+- Web job 122890731204，success：`pnpm install --frozen-lockfile`、`pnpm type-check`、`pnpm exec vitest run`（**6 文件 / 81 项通过**）、`pnpm exec oxlint .`、`pnpm exec eslint .`、`pnpm build` 全部成功。现有 Vite 构建大 chunk 警告仍存在，未隐藏、未更改阈值。
+- Python job 122890731735，success：Ruff `All checks passed!`，pytest **30 passed, 1 warning**，保留既有警告。
+- 此前的两个代码提交曾因新单测中对 Vue 响应式 Proxy 使用 `structuredClone`、尺寸测试夹带越界坐标而导致 GitHub CI 失败；随后分别用普通补充提交 `f04de0b`、`8a96e28` 修正测试，最终上述远程工作流全部通过。历史失败不改写成通过。
+- **当前状态：远程 CI PASS；本地真实 JSON 文件选择、异常读入、无上传和画面渲染仍为 NOT RUN。** 本记录不代替 R-011 的浏览器证据，不将 M1 整体标记完成。
