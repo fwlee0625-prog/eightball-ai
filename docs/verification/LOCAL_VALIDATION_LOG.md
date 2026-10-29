@@ -833,3 +833,117 @@ pnpm build
 - 测试修复提交 `fa7b3863739fa37e5f90515ecf20b36959b2fe0e` 改为使用原生 DOM `Event` 并定义只需的指针坐标属性，再通过 `dispatchEvent` 触发组件监听器；未改变拖拽组件业务代码。
 - 修复后 GitHub Actions push 运行 **40803864479** status=completed、conclusion=success：https://github.com/fwlee0625-prog/eightball-ai/actions/runs/40803864479 。Web job **123218026416** success：锁文件安装、类型检查、Vitest、Oxlint、ESLint、build 全部成功，**8 个测试文件 / 99 项通过**，Vite build 767ms；保留原有大 chunk 警告。Python job **123218026170** success：Ruff通过、pytest **30 passed, 1 warning**。
 - **当前结论：远程 CI PASS；PC 真实浏览器的拖拽同步、高版本边界和鼠标/键盘操作仍为 NOT RUN。** 不将单测结果代替本地浏览器验收，也不标记 M1 完成。
+
+
+#### R-012：版本安全修复与 PC 二维顶视拖拽验收
+
+- 日期/时区：2026-10-29，Asia/Shanghai；执行者：Codex。实际环境：macOS15.7.7 (24G720)、Node v24.12.0、pnpm11.25.0；沿用已有依赖，没有安装、升级或重解析锁文件。
+- 已读取根目录、apps/web、docs的适用AGENTS.md，根/Web README、R-011与V-012/V-013、视觉输入与标准状态契约，以及版本工具、二维组件、父视图和测试。平台限定PC，本轮没有安排移动端适配或移动端验收。
+- 开始前 `git status --short --branch` 退出0，仅输出 `## fix/single-axis-coordinate-step-20261028...origin/fix/single-axis-coordinate-step-20261028`，工作区干净。当前分支为用户指定分支，`git rev-parse HEAD` 为 `aaa3080104099bed8eec58aade2a720664a3fa36`。
+- 按要求实际执行 `git fetch origin`，退出0；随后远程引用亦为aaa3080，`git rev-list --left-right --count HEAD...origin/fix/single-axis-coordinate-step-20261028` 退出0、输出0/0。本地已包含目标提交，无需额外快进或切换；没有reset、clean、强制覆盖或暂存用户文件。R-011与PC范围规范已在目标历史中，均完整保留。
+- 本轮仓库内只追加本文档，不改业务源码、测试、GLB、依赖、锁文件、坐标映射或样例。临时输入与证据放 `/tmp/eightball-r012/`，未创建Git提交或推送。
+
+**自动化检查（cwd=apps/web，按要求顺序实际执行）**
+
+| 命令 | 真实退出码 | 实际结果与关键输出 | 证据 |
+|---|---|---|---|
+| `pnpm type-check` | 0 | PASS；vue-tsc --build | `/tmp/eightball-r012/1.log` |
+| `pnpm exec vitest run` | 0 | PASS；8文件、99项全部通过，无未处理异常；耗时2.12s | `/tmp/eightball-r012/2.log` |
+| `pnpm exec oxlint .` | 0 | PASS；无诊断输出 | `/tmp/eightball-r012/3.log` |
+| `pnpm exec eslint .` | 0 | PASS；无诊断输出 | `/tmp/eightball-r012/4.log` |
+| `pnpm build` | 0 | PASS（有警告）；Vite8.3.5，50 modules，built in442ms；TableStudioView669.60kB/gzip172.86kB | `/tmp/eightball-r012/5.log` |
+
+- 完整命令、returncode与输出：`/tmp/eightball-r012/checks.json`。原有 `Some chunks are larger than 500 kB after minification` 警告保留，没有提高阈值或隐藏。99项包含版本工具/上限拒绝/二维组件及父视图交互回归；本轮不以单测代替下面的浏览器操作。
+
+**真实浏览器与临时输入**
+
+- Spark `get_project({project:"p_01047fdd"})` 确认web终端running、监听5173；沿用该平台管理的 `pnpm dev --host localhost --port 5173`，不重复启动/重启。真实内置桌面浏览器访问localhost:5173，模型已载入、API健康已连接。浏览器操作退出码N/A。
+- 从原始样例复制coordinate_frame和table_geometry到临时near-max-version.json，设置版本9007199254740990、单球ID0在(0,0)，几何保持2540×1270mm；另生成正常版本1的single.json用于单球显示检查。两个输入文件的字节数及SHA256见fixture-manifest.json，未改仓库样例。
+- 导入通过实际原生文件选择器完成。球的选择、拖拽和按键使用真实UI输入；未调用Vue内部方法或篡改应用状态。只读DOM提取SVG aria-label/cx/cy、输入框字符串、全局STATE版本和错误提示，保存browser-states.json。涉及亚像素坐标时用CDP Input.dispatchMouseEvent发送真实指针事件，不注入应用事件处理逻辑。
+
+**状态版本上限修复：PASS**
+
+1. 实际导入near-max-version.json：显示1球，会话版本为 **9007199254740991**；二维选择ID0后，已提交坐标与输入均为(0,0)。
+2. X草稿改10后点击“应用坐标”：显示 `状态版本已达到 JavaScript 安全整数上限，无法继续修改。请恢复原始样例后重新导入。`；SVG/readout中的已提交坐标仍(0,0)，版本仍9007199254740991。
+3. 将X草稿恢复0、只将Y草稿改20再应用：再次出现同一错误，已提交坐标与版本仍不变。输入框保留用户未提交草稿10/20属于编辑展示，不把草稿误当作状态已修改；数据不变由只读SVG状态和readout独立确认。
+4. 将草稿恢复(0,0)并执行无变化应用，确认旧错误已清除；再从球中心真实拖动40px/40px，错误重新出现，球回到原坐标(0,0)，版本不变。此步骤独立确认拖拽确实触发了拒绝，未把前一次残留错误当作拖拽结果。
+5. 恢复原始样例：v1、16球、清除选择和错误。后续普通拖拽和输入修改均成功，证明恢复后可正常继续编辑。
+
+- 原始状态名称：max-safe X edit rejected、max-safe Y edit rejected、max-safe unchanged apply clears error、max-safe drag new error、sample restored after max-safe。截图max-safe-inputs.png、max-safe-drag.png（均在临时证据目录）。R-011的失败记录保留，本条记录修复后的新结果。
+
+**二维顶视图实际鼠标与键盘：PASS**
+
+| 操作 | 实际坐标与版本 | 结果 |
+|---|---|---|
+| 原始样例显示 | DOM有16个data-ball-id=0–15的目标 | PASS |
+| 单击ID0 | 坐标仍(-104.72715759277344,-515.1940307617188)，版本仍v1，仅选中ID0；右侧输入精度保留 | PASS |
+| 普通桌面鼠标拖向中心 | v1→v2，一次提交；实际落点(0,-1.983)，二维aria-label/readout与输入一致 | PASS |
+| 精确中心指针拖拽 | 使用当前可见SVG的亚像素中心，实际(0,0)，v2→v3，一次提交；SVG(cx,cy)=(127,254) | PASS |
+| 普通Right、Down | (0,0)→(10,0) v4→(10,10) v5，每键10mm | PASS |
+| Shift+Left、Shift+Up | (10,10)→(9,10) v6→(9,9) v7，每键1mm | PASS |
+| 真实3D画布重新选球 | 先点击空白取消选择，再按更新后的画布中心点击球体，重新选中ID0，右侧坐标为(9,9)，版本保持v7 | PASS；实际3D可选球已使用二维修改后的共享状态 |
+| 拖至右下外侧轨框 | (635,1270)，v7→v8 | PASS |
+| 拖至右上外侧轨框 | (635,-1270)，v8→v9 | PASS |
+| 拖至左下外侧轨框 | (-635,1270)，v9→v10 | PASS |
+| 拖至左上外侧轨框 | (-635,-1270)，v10→v11 | PASS |
+| 左上边界继续Left、Up | 坐标保持(-635,-1270)，两次均保持v11，无越界或无效版本递增 | PASS |
+| Shift+Right、Shift+Down向内移动 | (-634,-1270) v12→(-634,-1269) v13 | PASS |
+| 导入正常single.json | 二维仅1球，清除旧选择，会话v13→v14 | PASS |
+| 恢复原始样例 | 二维重新显示16球、v1 | PASS |
+| 恢复后输入X=10并应用 | v1→v2，Y精确保持-515.1940307617188，2D目标及输入同步 | PASS |
+
+- 四边角目标均位于SVG外框/内台面之外，验证的是实际指针限位，不仅是把合法边界值直接填入输入框。每次拖动只有一次版本增加，未观察到预览过程中多次提交。
+- 首次普通拖向中心的约1.983mm偏差与桌面输入工具整数像素落点相符；随后用真实亚像素指针输入确认精确中心映射为(0,0)。此项是UI坐标映射验证，不把0.001mm UI取整精度当作物理精度。
+- 辅助定位过程中，全页截图后元素滚动位置曾变化，一次精确中心输入未命中，未计作有效拖动；将球重新滚入可见区并读取当前矩形后成功。首次3D重新选球因取消选择后画布高度改变而使用旧中心点未命中；重新读取DOM矩形后完成独立选球。以上为定位过程，未冒充通过或产品失败。
+- 截图：drag-center.png、3d-sync-confirmed.png、boundary.png、keyboard-focus.png、single-topdown.png；原始成功状态与全部坐标详见browser-states.json。
+
+**PC窗口与键盘焦点：PASS**
+
+- 实测1920×1080、1440×900、1280×720；document.scrollWidth分别不超过对应innerWidth。1440px时为1425、1280px时为1265，1920px记录见layouts.json。二维SVG在1440px下为254×508、1280px下为250×500，界面通过纵向滚动可操作，无页面水平溢出。
+- 从file输入按Tab，实际焦点进入ID0的SVG g，focus-visible=true；之后连续Tab逐个经过ID0至ID15，顺序完整，记录focus-order.json。方向键和Shift组合键由实际键盘输入完成，保持焦点在对应球体，不滚动页面替代移动。Enter选球不改变坐标/版本。
+- PC窗口证据pc-1440.png、pc-1280.png、layouts.json、keyboard-focus.png。本轮未测试手机宽度或触控，不将移动端列为验收条件。临时视口最终已reset回默认。
+
+**Console / Network与状态收尾：PASS**
+
+- 开启CDP Network并保留cursor，捕获精确中心、后续3D选择/键盘、边界拖拽、单球导入、恢复与PC尺寸操作；requestWillBeSent/responseReceived/loadingFailed共0事件，hasMore=false、truncated=false，network.json保存原始结果。该窗口没有业务API调用或文件上传；初始已完成的health与GLB加载不在此窗口中，不把它们表述为被本次Network捕获。
+- Console无error，仅既有 `THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead.` 警告1项。console.json保存真实内容，未发现新增运行异常。
+- 最终恢复原始样例v1、16球、未选择、默认3D视角，保留Spark服务运行；截图final-pc.png。临时证据目录 `/tmp/eightball-r012/` 可能被系统清理，关键结果已内联保留。
+
+**证据复核与结论**
+
+- 根目录内联Python读取实际browser-states.json，对上限下原子拒绝、坐标/版本不变、普通单击、每次拖动/按键版本增量、四边角限位、3D重新选球坐标、单球与恢复、16球焦点顺序及PC无水平溢出逐项断言，退出0：`PASS: version atomicity, drag increments, XY synchronization, boundaries, keyboard steps, focus, imports and restored state evidence verified`。
+- GLB与前端锁文件SHA256实际复算仍为 `39f545f0f092c569b14d83c5eb1885a574484e8a4c04612cbfd05349101e0e0b`、`3dc9245952150f3ecf94a4c4781fc6709fb497c6951f0a58ddd770a26c3eb2ba`；二者未修改。
+- **最终状态：PASS（本轮版本安全修复与PC二维拖拽范围）**，无本轮FAIL/BLOCKED。GLB朝向、真实台呢尺寸、坐标标定、球半径及物理参数仍为NEEDS REVIEW；不因二维映射或场景同步成功放行几何标定，也不标记M1整体完成。
+- `git diff --check`退出0；最终仅本验证日志未提交，分支与HEAD仍为aaa3080。未修改业务源码/测试/GLB/依赖/锁文件，未创建提交或推送，R-011及全部历史原文保留。
+
+
+#### R-013：PC 工作台右侧面板独立滚动
+
+- 日期/时区：2026-10-29，Asia/Shanghai；执行者：Codex。用户反馈页面因二维顶视图变得过长，并授权“右侧面板自己滚动，不要影响整体”。本轮从仅验证转为最小布局修复，不改拖拽、版本或坐标业务逻辑。
+- 开始前 `git status --short --branch` 退出0：同一开发分支，HEAD=`aaa3080104099bed8eec58aade2a720664a3fa36`，仅本文档已有R-012未提交修改。完整保留，没有切分支、覆盖、清理、暂存或提交。
+- 原因：studio-grid以stretch把两列拉至右侧完整内容高度，viewport-stage的flex:1继续填满左列；二维编辑器、选球输入和提示增加右侧内容后，画布与页面一起被撑高。R-012的功能通过不代表这一布局体验通过，本轮独立修复并记录。
+- 修改文件：`apps/web/src/assets/main.css` 增加PC两列布局规则（min-width791px），工作台限定100dvh、workspace/grid允许收缩、3D阶段按剩余空间填充；右侧overflow-y:auto、内容不压缩、稳定滚动条与overscroll contain，侧栏必要时独立滚动。`apps/web/README.md`同步说明；本文档追加R-013。没有修改JS业务、GLB、模型参数、样例、依赖或锁文件，也没有新增移动端适配。
+
+**自动化（cwd=apps/web，按顺序实际执行）**
+
+| 命令 | 退出码 | 实际结果 |
+|---|---|---|
+| `pnpm type-check` | 0 | PASS；vue-tsc --build |
+| `pnpm exec vitest run` | 0 | PASS；8文件、99项通过，耗时2.73s，无未处理异常 |
+| `pnpm exec oxlint .` | 0 | PASS；无诊断 |
+| `pnpm exec eslint .` | 0 | PASS；无诊断 |
+| `pnpm build` | 0 | PASS（有警告）；50 modules、built in2.47s；TableStudioView669.60kB/gzip172.86kB |
+
+- 完整命令与输出 `/tmp/eightball-r013/checks.json`、1.log至5.log；保留原有500kB构建体积警告。未添加无法在jsdom中真实验证布局的样式断言，使用下面的实际浏览器尺寸/交互验证。
+
+**真实PC浏览器：PASS**
+
+- 沿用Spark管理的localhost:5173和Vite HMR，打开新的真实浏览器页面，模型已载入。对页面scrollHeight/scrollY、右侧clientHeight/scrollHeight/scrollTop和canvas矩形只读取证，保存layouts.json。
+- 1280×720：整页高度720，横向宽度1280，页面scrollY始终0；右侧固定530px，3D画布固定358px（top216、bottom574）。真实滚轮在右侧使scrollTop从0到720，而画布、页面尺寸完全不变。
+- 1280×720选球：右侧内容1453→1603px，右侧容器仍530px、画布仍358px；滚动后的二维实际鼠标拖拽成功，版本v1→v2。X清空再点击应用，出现“请输入 X 和 Y 坐标。”，右侧内容增至1615px，但页面仍720px、画布仍358px、scrollY仍0。错误提示与恢复按钮可通过面板滚动或焦点操作访问。
+- 恢复样例后右侧内容回1453px，面板530px、画布358px不变；恢复16球、v1。证明选球/提示/恢复只影响右侧滚动内容，未再撑高左侧。
+- 1440×900：整页900px、无横向溢出；右侧固定706px，画布固定533.5px。1920×1080：整页1080px、右侧886px、画布713.5px。两种尺寸下，选球前后内容1491→1641px，外部尺寸均稳定。
+- 在1440/1920窗口从文件输入Tab到ID0，实际focus-visible=true；方向键可移动并递增版本，焦点操作只带动右侧滚动。恢复按钮可达，恢复后v1/16球。未改键盘和拖拽业务。
+- 证据：`/tmp/eightball-r013/layouts.json`、error-fixed-height.png、final-pc.png；这些是本机临时证据，可能被系统清理。临时视口已reset回默认，最终恢复原始样例，保留开发服务运行。
+- 最终状态：**PASS（右侧独立滚动与PC布局稳定）**。未重新执行几何标定，也不改变R-011历史失败和R-012修复通过的原始结论；物理参数仍待独立确认。
+- `git diff --check`退出0；本轮未创建提交或推送，保留CSS、前端README及本文档的未提交修改，尤其保留任务开始前已有的R-012。

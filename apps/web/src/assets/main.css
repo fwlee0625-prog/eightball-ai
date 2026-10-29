@@ -265,3 +265,17 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
   .coordinate-field input { width: 145px; }
   .workspace-footer { font-size: 7px; }
 }
+
+/* PC workbench: inspector content scrolls without resizing the 3D viewport. */
+@media (min-width: 791px) {
+  .studio-shell { height: 100dvh; min-height: 0; }
+  .sidebar { min-height: 0; overflow-y: auto; }
+  .workspace { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  .workspace-header, .workspace-footer { flex-shrink: 0; }
+  .studio-grid { flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .viewport-panel { min-height: 0; }
+  .viewport-panel > :not(.viewport-stage) { flex-shrink: 0; }
+  .viewport-stage, .pool-scene { min-height: 0; }
+  .inspector-panel { min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-gutter: stable; }
+  .inspector-panel > * { flex-shrink: 0; }
+}
