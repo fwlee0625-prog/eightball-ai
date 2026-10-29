@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-已实现第一步：视觉球坐标的基础校验和标准球局状态转换，以及对应的 Python 单元测试。赛事规则、几何碰撞、物理仿真、候选评分和规划算法仍未实现。
+已实现第一步：视觉球坐标的基础校验、标准球局状态转换，以及逐杆轨迹记录 v0.1.0 的结构与领域约束校验。赛事规则、几何碰撞、物理仿真、候选评分和规划算法仍未实现。
 
 ## 已实现内容
 
@@ -30,3 +30,9 @@
 2. 确认球半径与袋口几何，再实现球体碰撞和可达区域检查。
 3. 明确 id 是追踪 ID 还是球的真实编号，并建立 cue-ball / group 等独立语义字段。
 4. 在契约稳定后接入 API 和前端球桌可视化。
+
+## 逐杆轨迹校验
+
+- `billiards_core.trajectory.validate_trajectory_record` 校验轨迹元数据、相对击球时间戳、原始帧索引、逐帧检测 ID、坐标边界与来源标记。
+- JSON Schema 由 `packages/contracts/schemas/trajectory.schema.json` 提供；测试同时检查 Schema 自身和领域规则。
+- 从仓库根目录执行 `uv run --locked pytest -q` 或项目原有 unittest 命令运行测试。

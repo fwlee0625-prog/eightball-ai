@@ -25,3 +25,12 @@ JSON Schema 负责结构校验；球 ID 唯一性、坐标边界和有限数值�
 ## 契约演进
 
 优先保持向后兼容的可选字段扩展。破坏性修改必须更新 Schema 版本或 API 版本，并同步修改生产者、消费者、样例和契约测试。docs/plan 中的历史 JSON 示例仍是设计草案，不自动成为正式契约。
+
+
+## 轨迹记录契约 v0.1.0
+
+- `schemas/trajectory.schema.json` 是逐杆轨迹的正式 JSON Schema，当前前端和 Python 核心校验器共同消费。
+- `frames[].timestamp_ns` 使用相对击球开始的纳秒值；首帧为 0，后续严格递增。实际时间戳是播放时间真相，`nominal_fps` 仅记录采集名义帧率，不用于推算缺失时间。
+- `frame_index` 严格递增但允许跳号，以保留原始缺帧信息；单帧未检测到的 ID 不自动补齐或推断位置。
+- 每帧的 `id` 仍是视觉追踪 ID，不是正式球号。坐标沿用标准状态的 mm / 台面中心原点 / 暂定方向，按活动矩形校验。
+- `data/samples/trajectory-001.json` 是完全合成的 UI 样例，明确标记 `provenance.kind=synthetic`，不代表真实球局或物理仿真。

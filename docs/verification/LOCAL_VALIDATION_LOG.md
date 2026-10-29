@@ -947,3 +947,13 @@ pnpm build
 - 证据：`/tmp/eightball-r013/layouts.json`、error-fixed-height.png、final-pc.png；这些是本机临时证据，可能被系统清理。临时视口已reset回默认，最终恢复原始样例，保留开发服务运行。
 - 最终状态：**PASS（右侧独立滚动与PC布局稳定）**。未重新执行几何标定，也不改变R-011历史失败和R-012修复通过的原始结论；物理参数仍待独立确认。
 - `git diff --check`退出0；本轮未创建提交或推送，保留CSS、前端README及本文档的未提交修改，尤其保留任务开始前已有的R-012。
+
+
+## R-014：逐杆轨迹契约与校验器（远程 CI 待验证）
+
+- 日期：2026-10-29；分支 `fix/single-axis-coordinate-step-20261028`。基于远程 HEAD `b2bcfcbf900657e47b50843957da8093b02414c4` 继续，未切换分支、重写历史或修改用户 GLB。
+- 本步目标：建立正式轨迹 JSON Schema v0.1.0、共享 TypeScript 类型、前端导入校验器、Python 领域校验器和纯合成样例；不实现回放 UI、不引入第三方依赖、不改现有 TableState v0.1.0。
+- 时间设计：`timestamp_ns` 是相对击球开始的纳秒值（首帧0），不使用大整数 Unix epoch；名义帧率仅作元数据，真实时间必须严格递增；原始 `frame_index` 可跳号表示缺帧。检测 ID 只表示追踪目标，缺失观测不自动补齐。
+- 样例：`data/samples/trajectory-001.json` 完全合成，6帧、16个目标、索引0/1/2/4/5/7，时间0/5/10/20/25/35ms，只有ID 0和ID 3移动；不代表真实球局或物理仿真。
+- 拟改文件：新增 `packages/contracts/schemas/trajectory.schema.json`、`apps/web/src/types/trajectory.ts`、`apps/web/src/utils/trajectoryImport.ts`、`apps/web/src/__tests__/trajectoryImport.spec.ts`、`python/billiards_core/billiards_core/trajectory.py`、`python/billiards_core/tests/test_trajectory.py`、`data/samples/trajectory-001.json`；同步 contracts、样例、核心模块、阶段计划与 README 文档。
+- 本阶段没有在当前执行环境运行本地 pnpm/uv 命令；远程 GitHub Actions 结果将在回放 UI 完成后的验收提交中如实追加。不得把代码写入视为测试通过。
