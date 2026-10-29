@@ -13,6 +13,10 @@ function parse(value: unknown): TrajectoryRecord {
 }
 
 describe('trajectory JSON import', () => {
+  it('rejects invalid JSON text', () => {
+    expect(() => parseTrajectoryJson('{')).toThrow('有效的 JSON')
+  })
+
   it('parses the synthetic sample and preserves recorded timestamps and frame gaps', () => {
     const parsed = parse(fixture())
     expect(parsed.frames).toHaveLength(6)
@@ -36,7 +40,6 @@ describe('trajectory JSON import', () => {
   })
 
   it.each([
-    ['invalid JSON', '{'],
     ['unsupported version', { ...fixture(), schema_version: '0.2.0' }],
     ['unknown top-level field', { ...fixture(), approved: true }],
     ['empty shot ID', { ...fixture(), shot_id: '  ' }],
@@ -105,10 +108,6 @@ describe('trajectory JSON import', () => {
       provenance: { ...fixture().provenance, kind: 'unknown' },
     }],
   ])('rejects %s', (_name, value) => {
-    if (_name === 'invalid JSON') {
-      expect(() => parseTrajectoryJson(value as string)).toThrow('有效的 JSON')
-    } else {
-      expect(() => parse(value)).toThrow(Error)
-    }
+    expect(() => parse(value)).toThrow(Error)
   })
 })
