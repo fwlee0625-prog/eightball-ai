@@ -22,7 +22,7 @@ describe('trajectory JSON import', () => {
     expect(parsed.frames).toHaveLength(6)
     expect(parsed.frames.map((frame) => frame.frame_index)).toEqual([0, 50, 100, 200, 250, 350])
     expect(parsed.frames.map((frame) => frame.timestamp_ns)).toEqual([
-      0, 5_000_000, 10_000_000, 20_000_000, 25_000_000, 35_000_000,
+      0, 250_000_000, 500_000_000, 1_000_000_000, 1_250_000_000, 1_750_000_000,
     ])
     expect(parsed.frames[0]?.balls).toHaveLength(16)
     expect(parsed.provenance.kind).toBe('synthetic')

@@ -66,7 +66,7 @@ describe('TrajectoryPlaybackPanel', () => {
     await wrapper.get('[aria-label="下一帧"]').trigger('click')
     await wrapper.get('[aria-label="下一帧"]').trigger('click')
     expect(wrapper.get('[data-testid="trajectory-frame-indicator"]').text()).toContain('原始索引 200')
-    expect(wrapper.emitted('frame-change')?.[3]?.[0]).toMatchObject({ frame_index: 4 })
+    expect(wrapper.emitted('frame-change')?.[3]?.[0]).toMatchObject({ frame_index: 200 })
   })
 
   it('seeks by actual timestamp rather than frame count or nominal FPS', async () => {
