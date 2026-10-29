@@ -47,3 +47,7 @@
 ## M1.6：XY 运动与击球边界候选
 
 调用 `billiards_core.trajectory_motion.analyze_trajectory_motion(record, stationary_speed_mm_s=2, moving_speed_mm_s=20, min_run_intervals=2, min_confidence=0.5)`。只比较原始相邻索引的检测：有索引缺口、观测 ID 不完整、显式低置信度或速度处于阈值灰区时记 unknown；仅在连续区间至少 2 段静止转 2 段运动（反之亦然）时输出候选时间窗。所有速度采用原始时间戳，单位 mm/s。不能据此确证真实击球、旋转、碰撞、进袋或物理参数；默认阈值仅用于合成诊断，真实测量后需独立校验。
+
+## M1.7：一局多杆只读契约
+
+`billiards_core.rack_playlist.validate_rack_playlist` 和 `summarize_rack_playlist` 接受显式手动排序的多杆 JSON（`packages/contracts/schemas/rack-playlist.schema.json`）；检验同局同桌、跟踪 ID 契约、shot_id/trajectory_id 唯一、state_version 递增和坐标系一致；不推断击球边界或跨杆时间。合成样例 `data/samples/rack-playlist-001.json` 不证明物理状态连续。

@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import trajectoryFixture from '../../../../data/samples/trajectory-001.json'
 import { parseTrajectoryJson } from '@/utils/trajectoryImport'
 import { parseTrajectoryCsv } from '@/utils/trajectoryCsvImport'
+import { parseRackPlaylistJson } from '@/utils/rackPlaylistImport'
 import { summarizeTrajectoryQuality } from '@/utils/trajectoryQualitySummary'
 import type { TableState } from '@/types/tableState'
 import type { TrajectoryFrame, TrajectoryRecord } from '@/types/trajectory'
@@ -22,6 +23,8 @@ const emit = defineEmits<{
 
 const MAX_IMPORT_FILE_BYTES = 1024 * 1024
 const trajectory = ref<TrajectoryRecord | null>(null)
+const rackShots = ref<TrajectoryRecord[]>([])
+const selectedShotIndex = ref(0)
 const currentFrameIndex = ref(0)
 const playheadNs = ref(0)
 const playbackRate = ref(1)
@@ -51,10 +54,11 @@ function formatTimestamp(timestampNs: number): string {
 }
 
 function matchesCurrentSession(record: TrajectoryRecord): boolean {
-  return record.table_id === props.expectedTableId &&
-    record.state_version === props.expectedStateVersion &&
-    record.table_geometry.active_length_mm === props.expectedGeometry.active_length_mm &&
-    record.table_geometry.active_width_mm === props.expectedGeometry.active_width_mm
+  const original = rackShots.value[0] ?? record
+  return original.table_id === props.expectedTableId &&
+    original.state_version === props.expectedStateVersion &&
+    original.table_geometry.active_length_mm === props.expectedGeometry.active_length_mm &&
+    original.table_geometry.active_width_mm === props.expectedGeometry.active_width_mm
 }
 
 function pausePlayback() {
@@ -70,6 +74,8 @@ function clearTrajectory() {
   importGeneration += 1
   pausePlayback()
   trajectory.value = null
+  rackShots.value = []
+  selectedShotIndex.value = 0
   currentFrameIndex.value = 0
   playheadNs.value = 0
   importPending.value = false
@@ -78,11 +84,11 @@ function clearTrajectory() {
   emit('frame-change', null)
 }
 
-function loadTrajectory(record: TrajectoryRecord) {
+function loadTrajectory(record: TrajectoryRecord, fromRack = false) {
   if (record.table_id !== props.expectedTableId) {
     throw new Error('轨迹 table_id 与当前球桌不一致，已拒绝回放。')
   }
-  if (record.state_version !== props.expectedStateVersion) {
+  if (!fromRack && record.state_version !== props.expectedStateVersion) {
     throw new Error('轨迹 state_version 与当前球局不一致。请恢复或导入对应起始状态后再回放。')
   }
   if (record.table_geometry.active_length_mm !== props.expectedGeometry.active_length_mm ||
@@ -91,12 +97,36 @@ function loadTrajectory(record: TrajectoryRecord) {
   }
 
   pausePlayback()
+  if (!fromRack) {
+    rackShots.value = []
+    selectedShotIndex.value = 0
+  }
   trajectory.value = record
   currentFrameIndex.value = 0
   playheadNs.value = 0
   error.value = ''
   emit('trajectory-change', record)
   emit('frame-change', record.frames[0] ?? null)
+}
+
+function loadRackShots(shots: TrajectoryRecord[]) {
+  const first = shots[0]!
+  if (first.table_id !== props.expectedTableId ||
+    first.state_version !== props.expectedStateVersion ||
+    first.table_geometry.active_length_mm !== props.expectedGeometry.active_length_mm ||
+    first.table_geometry.active_width_mm !== props.expectedGeometry.active_width_mm) {
+    throw new Error('多杆文件首杆与当前球桌或状态版本不匹配。')
+  }
+  rackShots.value = shots
+  selectedShotIndex.value = 0
+  loadTrajectory(first, true)
+}
+
+function selectRackShot(index: number) {
+  const record = rackShots.value[index]
+  if (!record) return
+  selectedShotIndex.value = index
+  loadTrajectory(record, true)
 }
 
 function loadSyntheticSample() {
@@ -132,6 +162,15 @@ async function importTrajectoryFile(event: Event) {
   importPending.value = true
   try {
     const contents = await file.text()
+    if (extension === 'json') {
+      const decoded: unknown = JSON.parse(contents)
+      if (decoded !== null && typeof decoded === 'object' && !Array.isArray(decoded) && 'shots' in decoded) {
+        const playlist = parseRackPlaylistJson(contents)
+        if (generation !== importGeneration) return
+        loadRackShots(playlist.shots)
+        return
+      }
+    }
     const record = extension === 'csv'
       ? parseTrajectoryCsv(contents)
       : parseTrajectoryJson(contents)
@@ -255,7 +294,7 @@ onBeforeUnmount(pausePlayback)
     </div>
 
     <div class="trajectory-load-row">
-      <label class="trajectory-file-label" for="trajectory-file">导入轨迹 JSON / CSV</label>
+      <label class="trajectory-file-label" for="trajectory-file">导入单杆 JSON / CSV 或多杆 JSON</label>
       <input
         id="trajectory-file"
         class="trajectory-file-input"
@@ -269,11 +308,19 @@ onBeforeUnmount(pausePlayback)
       </button>
     </div>
 
-    <p class="trajectory-help">只在本机读取文件。CSV 每行表示一个检测目标，轨迹元数据需在各行保持一致；JSON / CSV 均须匹配当前 table_id、state_version 和活动台面尺寸。</p>
+    <p class="trajectory-help">只在本机读取文件。支持单杆 JSON / CSV 或显式顺序的多杆 JSON；多杆首杆须匹配当前球局，后续杆版本递增。每杆时间戳独立从零开始，不推算跨杆真实时间。</p>
     <p v-if="importPending" class="trajectory-feedback" role="status">正在读取并校验轨迹…</p>
     <p v-if="error" class="trajectory-feedback trajectory-feedback--error" role="alert">{{ error }}</p>
 
     <template v-if="trajectory && currentFrame">
+      <div v-if="rackShots.length" class="trajectory-rate-row" data-testid="rack-shot-selector">
+        <label>切换杆次
+          <select :value="selectedShotIndex" aria-label="切换杆次" @change="selectRackShot(Number(($event.target as HTMLSelectElement).value))">
+            <option v-for="(shot, index) in rackShots" :key="shot.shot_id" :value="index">第 {{ index + 1 }} 杆 · {{ shot.shot_id }}</option>
+          </select>
+        </label>
+        <span>手动排序 · {{ rackShots.length }} 杆</span>
+      </div>
       <div class="trajectory-summary">
         <div>
           <span>当前单杆</span>

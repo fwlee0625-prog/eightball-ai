@@ -68,3 +68,7 @@ API默认 `http://localhost:8000`，可复制 `.env.example` 为 `.env.local` �
 - src/data/initialTableState.ts：引用仓库级标准状态样例。
 - src/types/tableState.ts：前端对标准球局状态的类型定义。
 - src/assets/main.css：响应式工作台样式。
+
+## M1.7：一局多杆本地回放
+
+轨迹文件选择器现支持多杆 JSON（正式结构 packages/contracts/schemas/rack-playlist.schema.json）；每份包含显式人工顺序的 2–100 个逐杆记录，首杆版本需要匹配当前球局，同一 table_id 与几何下后续版本严格递增。切换杆次重置该杆时间轴及质量摘要；回放只读，不改变底层球局。每杆时间戳独立从 0 开始，不代表跨杆绝对时间；单杆 JSON/CSV 保持支持。
