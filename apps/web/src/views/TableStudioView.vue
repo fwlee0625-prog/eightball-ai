@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import ApiHealthBadge from '@/components/ApiHealthBadge.vue'
 import PoolTableScene from '@/components/PoolTableScene.vue'
+import TableTopDownEditor from '@/components/TableTopDownEditor.vue'
 import { createInitialTableState } from '@/data/initialTableState'
 import { parseTableStateJson } from '@/utils/tableStateImport'
 import { nextStateVersion } from '@/utils/stateVersion'
@@ -74,6 +75,53 @@ function selectBall(id: number | null) {
   selectedBallId.value = id
 }
 
+function commitBallPosition(ballId: number, x: number, y: number) {
+  const ball = state.value.balls.find((item) => item.id === ballId)
+  if (!ball) return
+
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    coordinateError.value = '坐标必须是有效数字。'
+    return
+  }
+  if (x < -xLimit.value || x > xLimit.value) {
+    coordinateError.value = 'X 坐标必须在 ' + -xLimit.value + ' 到 ' + xLimit.value + ' mm 范围内。'
+    return
+  }
+  if (y < -yLimit.value || y > yLimit.value) {
+    coordinateError.value = 'Y 坐标必须在 ' + -yLimit.value + ' 到 ' + yLimit.value + ' mm 范围内。'
+    return
+  }
+  if (x === ball.x_mm && y === ball.y_mm) {
+    coordinateError.value = ''
+    return
+  }
+
+  let nextVersion: number
+  try {
+    nextVersion = nextStateVersion(state.value.state_version)
+  } catch (error) {
+    coordinateError.value = error instanceof Error ? error.message : '无法安全递增状态版本。'
+    return
+  }
+
+  importGeneration += 1
+  importPending.value = false
+  state.value = {
+    ...state.value,
+    state_version: nextVersion,
+    balls: state.value.balls.map((item) =>
+      item.id === ballId ? { ...item, x_mm: x, y_mm: y } : item,
+    ),
+  }
+  isDirty.value = true
+  coordinateError.value = ''
+}
+
+function moveBall(id: number, x: number, y: number) {
+  selectedBallId.value = id
+  commitBallPosition(id, x, y)
+}
+
 function applyCoordinateEdit() {
   const ball = selectedBall.value
   if (!ball) return
@@ -98,30 +146,7 @@ function applyCoordinateEdit() {
     return
   }
 
-  if (x === ball.x_mm && y === ball.y_mm) {
-    coordinateError.value = ''
-    return
-  }
-
-  let nextVersion: number
-  try {
-    nextVersion = nextStateVersion(state.value.state_version)
-  } catch (error) {
-    coordinateError.value = error instanceof Error ? error.message : '无法安全递增状态版本。'
-    return
-  }
-
-  importGeneration += 1
-  importPending.value = false
-  state.value = {
-    ...state.value,
-    state_version: nextVersion,
-    balls: state.value.balls.map((item) =>
-      item.id === ball.id ? { ...item, x_mm: x, y_mm: y } : item,
-    ),
-  }
-  isDirty.value = true
-  coordinateError.value = ''
+  commitBallPosition(ball.id, x, y)
 }
 
 function resetState() {
@@ -363,6 +388,13 @@ onBeforeUnmount(() => {
             <p v-if="importNotice" class="import-feedback import-feedback--success" role="status">{{ importNotice }}</p>
             <p v-if="importError" class="import-feedback import-feedback--error" role="alert">{{ importError }}</p>
           </div>
+
+          <TableTopDownEditor
+            :state="state"
+            :selected-ball-id="selectedBallId"
+            @select-ball="selectBall"
+            @move-ball="moveBall"
+          />
 
           <div class="inspector-section">
             <div class="section-heading">

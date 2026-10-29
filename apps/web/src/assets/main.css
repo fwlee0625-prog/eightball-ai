@@ -191,6 +191,22 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .import-feedback { margin: 10px 0 0; color: #bdd6c4; font-size: 9px; line-height: 1.6; overflow-wrap: anywhere; }
 .import-feedback--success { color: var(--mint); }
 .import-feedback--error { color: #ffad97; }
+.inspector-section--topdown { padding-bottom: 18px; }
+.topdown-help { margin: -2px 0 12px; color: #84988b; font-size: 9px; line-height: 1.65; }
+.topdown-board { display: flex; justify-content: center; width: 100%; }
+.topdown-svg { display: block; width: min(100%, 254px); height: auto; overflow: visible; user-select: none; }
+.topdown-rail { fill: #30251d; stroke: #78624b; stroke-width: 1; }
+.topdown-cloth { fill: #15563d; stroke: #4d8768; stroke-width: 1; }
+.topdown-axis { stroke: rgba(223,255,233,.19); stroke-width: .7; stroke-dasharray: 3 4; pointer-events: none; }
+.topdown-origin { fill: rgba(230,255,238,.55); pointer-events: none; }
+.topdown-ball { cursor: grab; outline: none; }
+.topdown-ball--dragging { cursor: grabbing; }
+.topdown-ball circle { stroke: rgba(6,15,10,.8); stroke-width: 1.1; transition: stroke-width 80ms ease; }
+.topdown-ball text { fill: #07130d; font-size: 7px; font-weight: 800; text-anchor: middle; dominant-baseline: central; pointer-events: none; user-select: none; }
+.topdown-ball--selected circle, .topdown-ball:focus-visible circle { stroke: #f4fff7; stroke-width: 2.8; }
+.topdown-ball:focus-visible { outline: none; }
+.topdown-readout { margin: 11px 0 0; color: #b7d9c2; font-size: 9px; text-align: center; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.topdown-warning { margin: 10px 0 0; padding: 8px 9px; border-left: 2px solid rgba(233,189,122,.5); background: rgba(233,189,122,.035); color: #a89b7c; font-size: 8px; line-height: 1.65; }
 .inspector-section--meta { padding-bottom: 14px; }
 .metadata-list { display: flex; flex-direction: column; gap: 10px; margin: 0; }
 .metadata-list > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 9px; }

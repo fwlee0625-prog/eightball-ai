@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 
 import TableStudioView from '../views/TableStudioView.vue'
+import TableTopDownEditor from '../components/TableTopDownEditor.vue'
 import type { TableState } from '../types/tableState'
 
 const resetSceneView = vi.fn<() => void>()
@@ -157,6 +158,26 @@ describe('TableStudioView', () => {
     expect(wrapper.get('[role="alert"]').text()).toContain(error)
     expect(scene.props('state')).toBe(initialState)
     expect(wrapper.text()).toContain('原始样例 · 只读来源')
+  })
+
+  it('commits a top-down drag as one versioned coordinate update', async () => {
+    const wrapper = mountStudio()
+    const editor = wrapper.findComponent(TableTopDownEditor)
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    const initial = scene.props('state') as TableState
+    const original = initial.balls.find((ball) => ball.id === 0)!
+
+    editor.vm.$emit('move-ball', 0, 12.5, -20.25)
+    await nextTick()
+
+    const updated = scene.props('state') as TableState
+    expect(updated.state_version).toBe(initial.state_version + 1)
+    expect(updated.balls.find((ball) => ball.id === 0)).toEqual({
+      ...original, x_mm: 12.5, y_mm: -20.25,
+    })
+    expect(scene.props('selectedBallId')).toBe(0)
+    expect(wrapper.text()).toContain('当前 ID 0')
+    expect(wrapper.text()).toContain('本地修改 · 未保存')
   })
 
   it('imports valid standard JSON, replaces the scene state, and increments the session version', async () => {

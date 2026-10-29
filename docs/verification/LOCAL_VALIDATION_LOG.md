@@ -808,3 +808,20 @@ pnpm build
 - **新增测试：** 版本递增工具正常/边界/非法值；真实 UI 测试导入接近上限的合法单球状态，连续两次编辑均应拒绝且球局保持原样。此测试对应 R-011 最小复现，不通过删除断言、舍入或允许不安全整数规避。
 - **自动化：** 尚未在本记录中执行；提交后读取 GitHub Actions 的真实结果再追加。需运行 `pnpm type-check`、`pnpm exec vitest run`、`pnpm exec oxlint .`、`pnpm exec eslint .`、`pnpm build`。
 - **本地浏览器复验：** NOT RUN。请在实际浏览器中导入 R-011 的 near-max-version.json（state_version=9007199254740990），确认导入版本为9007199254740991；随后尝试将X改为10、再将Y改为20，两次均应出现安全整数上限错误，状态版本及原始坐标保持不变。再恢复样例确认v1/16球正常。记录真实截图/页面文本，不能用单测替代。
+
+
+**V-012 远程 CI 实际结果（2026-10-29）**
+
+- 修复提交 `b6e2245a5e4c804cb8dbb915c3169e854e25c7ce` 对应 GitHub Actions push 运行 **40803226070**，status=completed、conclusion=success：https://github.com/fwlee0625-prog/eightball-ai/actions/runs/40803226070 。
+- Web job **123215980526** success：冻结锁文件安装、type-check、Vitest、Oxlint、ESLint、build 全部通过；**7 个测试文件 / 92 项通过**。Python job **123215980734** success：Ruff All checks passed，pytest **30 passed, 1 warning**。Vite 原有 500 kB chunk warning 保留。
+- 该结果验证修复代码及回归单测，但不替代 near-max-version.json 的真实浏览器复验。V-012 本地浏览器状态仍待 Codex 追加证据。
+
+## V-013：M1 二维顶视拖拽摆球（自动化及本地浏览器待验证）
+
+- **目标：** 让 PC 用户在独立于 GLB 朝向的标准 2D 台面图上直接移动现有视觉检测目标，减少手工输入 XY 的操作；一次拖动只提交一次状态版本，坐标限制在标准状态活动矩形内。
+- **范围：** 新增 `TableTopDownEditor.vue` 与组件测试；接入 `TableStudioView.vue`，复用安全版本递增函数；更新样式、前端 README。本次只移动已有 ID 0–15 的检测目标，不添加/删除目标、不推断正式球号、不增加球袋、碰撞或规则判断。
+- **坐标：** 顶视图宽高按 `table_geometry.active_width_mm / active_length_mm` 映射，中心为(0,0)，屏幕下方对应暂定 +Y。超出 SVG 活动区域的指针坐标限位到矩形边界；拖动位置按 0.001 mm 四舍五入，仅为 UI 输入精度，不代表物理精度。GLB 方向、球半径、袋口及真实台面仍未标定。
+- **键盘：** 每个目标可聚焦；Enter/Space 选中，方向键移动 10 mm，Shift + 方向键移动 1 mm；不允许越界。PC 桌面浏览器为平台范围，不安排移动端专门适配。
+- **防竞态与版本：** 复用 V-012 安全版本工具；版本达到 MAX_SAFE_INTEGER 时编辑拒绝，保留原状态并显示错误。拖拽预览期间不改共享状态，pointerup 后只提交一次；外部状态改变会取消拖动预览。
+- **自动化：** 代码提交后核对 GitHub Actions 实际运行，不将此处的计划当成通过。测试包括中心/边界映射、点击选择、指针拖拽限位、方向键步长、边界拒绝和父视图单次版本递增。
+- **本地浏览器：** NOT RUN。Codex 应在桌面浏览器中检查：① 从样例加载后 16 球都出现在 2D 顶视图；② 鼠标拖动球至中心/边缘，3D 场景和坐标输入同步，状态版本一次递增；③ 单击选择不改变坐标或版本；④ 方向键/Shift+方向键能精确移动并在边界限位；⑤ 导入单球后只有该球可拖动，恢复样例后恢复 16 球；⑥ 达到版本上限时拖动失败、原坐标不变且有可见错误；⑦ 检查 PC 常见窗口宽度、键盘焦点、Console 与 Network。记录截图、DOM坐标、版本前后值与真实环境，不要求移动端验证。
