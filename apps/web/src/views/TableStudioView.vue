@@ -5,6 +5,7 @@ import ApiHealthBadge from '@/components/ApiHealthBadge.vue'
 import PoolTableScene from '@/components/PoolTableScene.vue'
 import { createInitialTableState } from '@/data/initialTableState'
 import { parseTableStateJson } from '@/utils/tableStateImport'
+import { nextStateVersion } from '@/utils/stateVersion'
 import type { SceneStatus, TableBallState, TableState } from '@/types/tableState'
 
 interface SceneHandle {
@@ -102,11 +103,19 @@ function applyCoordinateEdit() {
     return
   }
 
+  let nextVersion: number
+  try {
+    nextVersion = nextStateVersion(state.value.state_version)
+  } catch (error) {
+    coordinateError.value = error instanceof Error ? error.message : '无法安全递增状态版本。'
+    return
+  }
+
   importGeneration += 1
   importPending.value = false
   state.value = {
     ...state.value,
-    state_version: state.value.state_version + 1,
+    state_version: nextVersion,
     balls: state.value.balls.map((item) =>
       item.id === ball.id ? { ...item, x_mm: x, y_mm: y } : item,
     ),
@@ -165,8 +174,7 @@ async function importStateFile(event: Event) {
       throw new Error(`当前工作台仅支持活动区域 ${length} × ${width} mm，请先完成其它尺寸的球桌标定。`)
     }
 
-    const nextVersion = Math.max(state.value.state_version, imported.state_version) + 1
-    if (!Number.isSafeInteger(nextVersion)) throw new Error('状态版本已超出安全整数范围。')
+    const nextVersion = nextStateVersion(Math.max(state.value.state_version, imported.state_version))
 
     state.value = { ...imported, state_version: nextVersion }
     selectedBallId.value = null

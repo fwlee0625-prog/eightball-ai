@@ -194,6 +194,47 @@ describe('TableStudioView', () => {
     expect(file.text).toHaveBeenCalledOnce()
   })
 
+  it('preserves state when a near-maximum imported version cannot be incremented', async () => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    const initial = scene.props('state') as TableState
+    const nearLimit = JSON.parse(JSON.stringify(initial)) as TableState
+    nearLimit.state_version = Number.MAX_SAFE_INTEGER - 1
+    nearLimit.balls = [{ id: 0, x_mm: 0, y_mm: 0 }]
+    const input = wrapper.get('input[name="state-import"]')
+    Object.defineProperty(input.element, 'files', {
+      configurable: true,
+      value: [{
+        name: 'near-max-version.json',
+        size: 500,
+        text: () => Promise.resolve(JSON.stringify(nearLimit)),
+      }],
+    })
+
+    await input.trigger('change')
+    await vi.waitFor(() => expect(wrapper.text()).toContain('已导入 near-max-version.json'))
+    expect((scene.props('state') as TableState).state_version).toBe(Number.MAX_SAFE_INTEGER)
+    expect(scene.props('state')).not.toBe(initial)
+
+    scene.vm.$emit('select-ball', 0)
+    await nextTick()
+    const importedState = scene.props('state') as TableState
+
+    await wrapper.find('input[name="x"]').setValue('10')
+    await wrapper.find('form').trigger('submit')
+    expect(wrapper.get('[role="alert"]').text()).toContain('安全整数上限')
+    expect(scene.props('state')).toBe(importedState)
+    expect((scene.props('state') as TableState).balls[0]).toEqual({ id: 0, x_mm: 0, y_mm: 0 })
+    expect(wrapper.text()).toContain('STATE v' + Number.MAX_SAFE_INTEGER)
+
+    await wrapper.find('input[name="y"]').setValue('20')
+    await wrapper.find('form').trigger('submit')
+    expect(wrapper.get('[role="alert"]').text()).toContain('安全整数上限')
+    expect(scene.props('state')).toBe(importedState)
+    expect((scene.props('state') as TableState).state_version).toBe(Number.MAX_SAFE_INTEGER)
+    expect((scene.props('state') as TableState).balls[0]).toEqual({ id: 0, x_mm: 0, y_mm: 0 })
+  })
+
   it('preserves prior state and selection on invalid imported coordinates', async () => {
     const wrapper = mountStudio()
     const scene = wrapper.findComponent(PoolTableSceneStub)
