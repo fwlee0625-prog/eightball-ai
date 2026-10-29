@@ -9,6 +9,7 @@
 - vision-balls-001.json：保留视觉提供的原始 id、x、y 数值，不改变原始顺序。
 - table-state-001.json：将同一批坐标映射到初版标准状态，按 ID 排序并附上暂定台面参数和坐标系元数据。
 - trajectory-001.json：完全合成的逐杆轨迹，包含 6 帧、1.75 秒时间跨度、原始帧索引跳号和不等间隔时间戳，用于可见回放与校验器回归。
+- trajectory-001.csv：由同一合成轨迹导出的扁平 CSV，每行表示一个检测目标，元数据重复记录，用于验证 CSV 转换与 JSON 契约的一致性。
 
 ## 当前样例的解释
 
@@ -27,6 +28,7 @@
 ## 合成轨迹样例
 
 - Schema：`packages/contracts/schemas/trajectory.schema.json` v0.1.0。
+- CSV 列：`schema_version`、轨迹 / 球桌 / 单杆元数据、`frame_index`、`timestamp_ns`、`ball_id`、`x_mm`、`y_mm`、`confidence`、`provenance_kind`、`provenance_description`。除 `confidence` 外，列均为必需；所有元数据必须在每行一致。CSV 的时间单位固定为 ns，坐标系固定沿用 Schema v0.1.0。
 - 用途：验证按实际时间戳回放、帧索引缺口、轨迹 ID 与活动台面边界；不是训练数据、真实比赛记录或物理仿真结果。
 - 时间：`timestamp_ns` 从击球开始计时，单位纳秒；`nominal_fps=200` 只是来源名义帧率，帧索引 `0,50,100,200,250,350` 和实际时间戳分别保留，不能按固定 200 FPS 补齐缺帧。时间戳为 0、250、500、1000、1250、1750 ms，对应原始帧号间隔，刻意保留较大的缺帧区间以便观察时间轴。
 - 位置：只有 ID 0 与 ID 3 在样例中随时间变化，其余 ID 保持静止以便观察；ID 仍仅为合成追踪标识。

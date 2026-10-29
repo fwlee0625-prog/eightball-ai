@@ -16,6 +16,8 @@
 
 apps/api、完整赛事规则、物理仿真、候选评分与搜索、python/billiards_ml、scripts 和跨模块集成测试仍未实现。前端模型拟合与台面表面高度仍是临时估计；本地坐标编辑不写回样例或后端。M0 计划中的 FastAPI /health、CI 等验收项目前尚未在仓库中看到对应实现。只有在功能已实现、相关测试实际运行并留下验收证据后，才能将其标记为完成。
 
+当前开发分支在 main 的基础上还已实现 FastAPI `/health` 与前端健康状态、轨迹 Schema v0.1.0 / TypeScript 与 Python 校验器、合成轨迹 JSON 和时间戳驱动的 2D / 3D 回放；R-015 已记录该回放的本地 PC 浏览器验收。当前分支新增 CSV 导入与 `data/samples/trajectory-001.csv`，其自动化和本地验收尚待执行；CSV 导入不等于真实 200 FPS 数据接入，数据质量报告及球桌几何标定仍未完成。
+
 本文档里的历史接口、目录、指标和技术方案仍需按实际代码理解；已提交的正式初版契约以 packages/contracts/schemas 中的 Schema 为准。
 
 ## 文档导航

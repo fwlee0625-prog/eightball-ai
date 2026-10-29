@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import trajectoryFixture from '../../../../data/samples/trajectory-001.json'
 import { parseTrajectoryJson } from '@/utils/trajectoryImport'
+import { parseTrajectoryCsv } from '@/utils/trajectoryCsvImport'
 import type { TableState } from '@/types/tableState'
 import type { TrajectoryFrame, TrajectoryRecord } from '@/types/trajectory'
 
@@ -114,13 +115,22 @@ async function importTrajectoryFile(event: Event) {
   const generation = ++importGeneration
   error.value = ''
   if (file.size > MAX_IMPORT_FILE_BYTES) {
-    error.value = '轨迹文件超过 1 MiB 限制，请选择较小的 JSON 文件。'
+    error.value = '轨迹文件超过 1 MiB 限制，请选择较小的 JSON 或 CSV 文件。'
+    return
+  }
+
+  const extension = file.name.toLowerCase().split('.').pop()
+  if (extension !== 'json' && extension !== 'csv') {
+    error.value = '仅支持 .json 或 .csv 格式的轨迹文件。'
     return
   }
 
   importPending.value = true
   try {
-    const record = parseTrajectoryJson(await file.text())
+    const contents = await file.text()
+    const record = extension === 'csv'
+      ? parseTrajectoryCsv(contents)
+      : parseTrajectoryJson(contents)
     if (generation !== importGeneration) return
     loadTrajectory(record)
   } catch (cause) {
@@ -237,16 +247,16 @@ onBeforeUnmount(pausePlayback)
   <section class="inspector-section trajectory-playback" aria-labelledby="trajectory-playback-heading">
     <div class="section-heading">
       <h3 id="trajectory-playback-heading">轨迹回放</h3>
-      <span class="section-muted">M1 / LOCAL JSON</span>
+      <span class="section-muted">M1 / LOCAL DATA</span>
     </div>
 
     <div class="trajectory-load-row">
-      <label class="trajectory-file-label" for="trajectory-file">导入轨迹 JSON</label>
+      <label class="trajectory-file-label" for="trajectory-file">导入轨迹 JSON / CSV</label>
       <input
         id="trajectory-file"
         class="trajectory-file-input"
         type="file"
-        accept=".json,application/json"
+        accept=".json,.csv,application/json,text/csv"
         :disabled="importPending"
         @change="importTrajectoryFile"
       />
@@ -255,7 +265,7 @@ onBeforeUnmount(pausePlayback)
       </button>
     </div>
 
-    <p class="trajectory-help">只在本机读取文件。轨迹必须匹配当前 table_id、state_version 和活动台面尺寸。</p>
+    <p class="trajectory-help">只在本机读取文件。CSV 每行表示一个检测目标，轨迹元数据需在各行保持一致；JSON / CSV 均须匹配当前 table_id、state_version 和活动台面尺寸。</p>
     <p v-if="importPending" class="trajectory-feedback" role="status">正在读取并校验轨迹…</p>
     <p v-if="error" class="trajectory-feedback trajectory-feedback--error" role="alert">{{ error }}</p>
 

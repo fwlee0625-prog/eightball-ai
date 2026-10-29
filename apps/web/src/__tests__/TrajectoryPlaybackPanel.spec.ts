@@ -144,6 +144,32 @@ describe('TrajectoryPlaybackPanel', () => {
     expect(wrapper.text()).not.toContain('无法读取轨迹文件')
   })
 
+  it('imports a local CSV file through the file input', async () => {
+    const wrapper = mountPanel()
+    const csv = [
+      'schema_version,trajectory_id,match_id,rack_id,shot_id,table_id,state_version,source,nominal_fps,active_length_mm,active_width_mm,frame_index,timestamp_ns,ball_id,x_mm,y_mm,confidence,provenance_kind,provenance_description',
+      '0.1.0,csv-trajectory-001,csv-match-001,csv-rack-001,synthetic-shot-001,vision-table-001,1,synthetic-demo,200,2540,1270,0,0,0,-100,-500,,synthetic,CSV test fixture',
+      '0.1.0,csv-trajectory-001,csv-match-001,csv-rack-001,synthetic-shot-001,vision-table-001,1,synthetic-demo,200,2540,1270,1,250000000,0,-90,-490,,synthetic,CSV test fixture',
+    ].join('\n')
+    const input = wrapper.get('input[type="file"]')
+    Object.defineProperty(input.element, 'files', {
+      configurable: true,
+      value: [{
+        name: 'trajectory.csv',
+        size: csv.length,
+        text: () => Promise.resolve(csv),
+      }],
+    })
+    await input.trigger('change')
+    await flushPromises()
+    expect(wrapper.text()).toContain('synthetic-shot-001')
+    expect(wrapper.get('[data-testid="trajectory-frame-indicator"]').text()).toContain('原始索引 0')
+    expect(wrapper.emitted('trajectory-change')?.[0]?.[0]).toMatchObject({
+      trajectory_id: 'csv-trajectory-001',
+      state_version: 1,
+    })
+  })
+
   it('reset token clears the loaded trajectory', async () => {
     const wrapper = mountPanel()
     await wrapper.get('.trajectory-sample-button').trigger('click')
