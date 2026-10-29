@@ -43,3 +43,7 @@
 新增 billiards_core.trajectory_quality.analyze_trajectory_quality(record, low_confidence_threshold=0.5, nominal_timing_tolerance=0.25, ball_diameter_mm=None)。它先复用正式 v0.1.0 轨迹校验器，然后只读统计记录帧数量、源索引缺口、同杆检测 ID 缺失、置信度低值和时间戳相对名义 FPS 的偏差。报告 JSON 可序列化、同输入结果稳定；每类仅显示最多 20 条示例，统计计数保留完整。
 
 未提供球直径时跳过重叠诊断，输出 null 而非 0。只有调用者提供经过测量的球直径，才计算二维球心间距疑似重叠；不能直接推断真实碰撞、入袋或掉帧。来源 ID 不是正式球号，坐标原点和方向仍待标定，名义 FPS 不是实测采集性能。真实球半径/直径尚未经过实测标定；`ball_diameter_mm` 是调用方提供的诊断参数，传入参数本身不证明已标定。GLB 网格尺寸只描述模型资产，不能证明现实球的实际尺寸。当前没有前端质量卡或服务 API；本轮只覆盖 Python 核心。执行 uv run --locked pytest -q python/billiards_core/tests/test_trajectory_quality.py 和 uv run --locked ruff check .；自动化与本地状态按 M1.4 验证日志为准。
+
+## M1.6：XY 运动与击球边界候选
+
+调用 `billiards_core.trajectory_motion.analyze_trajectory_motion(record, stationary_speed_mm_s=2, moving_speed_mm_s=20, min_run_intervals=2, min_confidence=0.5)`。只比较原始相邻索引的检测：有索引缺口、观测 ID 不完整、显式低置信度或速度处于阈值灰区时记 unknown；仅在连续区间至少 2 段静止转 2 段运动（反之亦然）时输出候选时间窗。所有速度采用原始时间戳，单位 mm/s。不能据此确证真实击球、旋转、碰撞、进袋或物理参数；默认阈值仅用于合成诊断，真实测量后需独立校验。
