@@ -171,7 +171,17 @@ describe('trajectory CSV import', () => {
   })
 
   it('rejects a trajectory whose first recorded frame does not start at index and timestamp zero', () => {
-    const csv = updateCell(toCsv(), 0, 'frame_index', '10')
-    expect(() => parseTrajectoryCsv(csv)).toThrow('第一帧 frame_index 必须为 0')
+    const lines = toCsv().split('\n')
+    const headers = lines[0]!.split(',')
+    const frameIndexColumn = headers.indexOf('frame_index')
+    const firstFrameBallCount = fixture().frames[0]!.balls.length
+
+    for (let rowIndex = 1; rowIndex <= firstFrameBallCount; rowIndex += 1) {
+      const cells = lines[rowIndex]!.split(',')
+      cells[frameIndexColumn] = '10'
+      lines[rowIndex] = cells.join(',')
+    }
+
+    expect(() => parseTrajectoryCsv(lines.join('\n'))).toThrow('第一帧 frame_index 必须为 0')
   })
 })
