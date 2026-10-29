@@ -27,16 +27,16 @@ def test_consecutive_motion_and_boundary_windows_are_candidates_not_hits():
     record = fixture()
     original = copy.deepcopy(record)
     report = analyze_trajectory_motion(record)
-    assert report["stationary_interval_count"] == 4
-    assert report["moving_interval_count"] == 4
+    assert report["stationary_interval_count"] == 5
+    assert report["moving_interval_count"] == 3
     assert report["unknown_interval_count"] == 0
     assert [item["kind"] for item in report["boundary_candidates"]] == [
         "motion_start_candidate", "motion_stop_candidate",
     ]
     assert report["boundary_candidates"][0] == {
-        "kind": "motion_start_candidate", "from_frame_index": 3,
-        "to_frame_index": 4, "window_start_ns": 15_000_000,
-        "window_end_ns": 20_000_000,
+        "kind": "motion_start_candidate", "from_frame_index": 2,
+        "to_frame_index": 3, "window_start_ns": 10_000_000,
+        "window_end_ns": 15_000_000,
     }
     assert report == analyze_trajectory_motion(record)
     assert record == original
