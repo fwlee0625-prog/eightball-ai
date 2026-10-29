@@ -23,7 +23,7 @@ export function parseRackPlaylistJson(text: string): RackPlaylist {
   }
   const raw = value as Record<string, unknown>
   const fields = ['schema_version', 'match_id', 'rack_id', 'table_id', 'sequence_origin', 'shots']
-  if (Object.keys(raw).length !== fields.length || fields.some((key) => !Object.hasOwn(raw, key))) {
+  if (Object.keys(raw).length !== fields.length || fields.some((key) => !Object.prototype.hasOwnProperty.call(raw, key))) {
     throw new Error('多杆文件字段不符合契约。')
   }
   if (raw.schema_version !== '0.1.0' || raw.sequence_origin !== 'manual') {
