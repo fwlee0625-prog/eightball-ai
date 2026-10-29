@@ -66,7 +66,7 @@ describe('TrajectoryPlaybackPanel', () => {
     await wrapper.get('[aria-label="下一帧"]').trigger('click')
     await wrapper.get('[aria-label="下一帧"]').trigger('click')
     expect(wrapper.get('[data-testid="trajectory-frame-indicator"]').text()).toContain('原始索引 4')
-    expect(wrapper.emitted('frame-change')?.at(-1)?.[0]).toMatchObject({ frame_index: 4 })
+    expect(wrapper.emitted('frame-change')?.[3]?.[0]).toMatchObject({ frame_index: 4 })
   })
 
   it('seeks by actual timestamp rather than frame count or nominal FPS', async () => {
@@ -111,8 +111,8 @@ describe('TrajectoryPlaybackPanel', () => {
     await wrapper.setProps({ expectedStateVersion: 2 })
     await nextTick()
     expect(wrapper.get('[role="alert"]').text()).toContain('已停止过期轨迹回放')
-    expect(wrapper.emitted('trajectory-change')?.at(-1)).toEqual([null])
-    expect(wrapper.emitted('frame-change')?.at(-1)).toEqual([null])
+    expect(wrapper.emitted('trajectory-change')?.[1]).toEqual([null])
+    expect(wrapper.emitted('frame-change')?.[1]).toEqual([null])
   })
 
   it('clears the playback and emits null events when exiting', async () => {

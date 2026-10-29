@@ -34,9 +34,10 @@ let lastAnimationTimeMs: number | null = null
 const currentFrame = computed(
   () => trajectory.value?.frames[currentFrameIndex.value] ?? null,
 )
-const durationNs = computed(
-  () => trajectory.value?.frames.at(-1)?.timestamp_ns ?? 0,
-)
+const durationNs = computed(() => {
+  const frames = trajectory.value?.frames
+  return frames?.[frames.length - 1]?.timestamp_ns ?? 0
+})
 const durationMs = computed(() => durationNs.value / 1_000_000)
 const playheadMs = computed(() => playheadNs.value / 1_000_000)
 
