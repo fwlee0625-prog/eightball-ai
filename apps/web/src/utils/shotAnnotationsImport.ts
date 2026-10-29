@@ -57,7 +57,7 @@ export function parseShotAnnotationsJson(text: string): ShotAnnotations {
     const expertText = nonEmpty(note.expert_text, 'expert_text')
     if (note.text_source !== 'provided-transcript') throw new Error('仅支持已提供的讲解文本。')
     const time = note.relative_timestamp_ns
-    if (time !== null && (!Number.isSafeInteger(time) || typeof time !== 'number' || time < 0)) {
+    if (time !== null && (typeof time !== 'number' || !Number.isSafeInteger(time) || time < 0)) {
       throw new Error('relative_timestamp_ns 无效。')
     }
     let outcome: ShotAnnotation['actual_observation'] = null

@@ -1,8 +1,6 @@
 """Reproducible synthetic M1 integration preview, not a final real-world acceptance."""
 
 from collections.abc import Mapping
-from typing import Any
-
 from .calibration_profile import fit_affine_preview
 from .rack_playlist import summarize_rack_playlist
 from .shot_annotations import link_shot_annotations
