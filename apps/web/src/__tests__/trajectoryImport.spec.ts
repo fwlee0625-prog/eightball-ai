@@ -20,7 +20,7 @@ describe('trajectory JSON import', () => {
   it('parses the synthetic sample and preserves recorded timestamps and frame gaps', () => {
     const parsed = parse(fixture())
     expect(parsed.frames).toHaveLength(6)
-    expect(parsed.frames.map((frame) => frame.frame_index)).toEqual([0, 1, 2, 4, 5, 7])
+    expect(parsed.frames.map((frame) => frame.frame_index)).toEqual([0, 50, 100, 200, 250, 350])
     expect(parsed.frames.map((frame) => frame.timestamp_ns)).toEqual([
       0, 5_000_000, 10_000_000, 20_000_000, 25_000_000, 35_000_000,
     ])

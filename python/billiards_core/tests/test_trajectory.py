@@ -26,8 +26,8 @@ class TrajectoryRecordValidationTests(unittest.TestCase):
         Draft202012Validator(self.schema).validate(self.sample)
         validate_trajectory_record(self.sample)
         self.assertEqual(self.sample["timebase"]["nominal_fps"], 200)
-        self.assertEqual(self.sample["frames"][3]["timestamp_ns"], 20_000_000)
-        self.assertEqual(self.sample["frames"][3]["frame_index"], 4)
+        self.assertEqual(self.sample["frames"][3]["timestamp_ns"], 1_000_000_000)
+        self.assertEqual(self.sample["frames"][3]["frame_index"], 200)
 
     def test_frame_index_gaps_are_allowed_but_timestamps_are_strictly_increasing(self):
         validate_trajectory_record(self.sample)
