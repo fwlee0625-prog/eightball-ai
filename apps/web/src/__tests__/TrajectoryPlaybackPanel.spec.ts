@@ -59,7 +59,7 @@ describe('TrajectoryPlaybackPanel', () => {
   })
 
   it('shows a local-only quality summary for the loaded trajectory', async () => {
-    const fetchMock = vi.fn()
+    const fetchMock = vi.fn<typeof fetch>()
     vi.stubGlobal('fetch', fetchMock)
     const wrapper = mountPanel()
     await wrapper.get('.trajectory-sample-button').trigger('click')
