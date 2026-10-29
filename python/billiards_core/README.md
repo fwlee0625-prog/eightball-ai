@@ -36,3 +36,10 @@
 - `billiards_core.trajectory.validate_trajectory_record` 校验轨迹元数据、相对击球时间戳、原始帧索引、逐帧检测 ID、坐标边界与来源标记。
 - JSON Schema 由 `packages/contracts/schemas/trajectory.schema.json` 提供；测试同时检查 Schema 自身和领域规则。
 - 从仓库根目录执行 `uv run --locked pytest -q` 或项目原有 unittest 命令运行测试。
+
+
+## M1.4：轨迹数据质量报告（Python 内部 API）
+
+新增 billiards_core.trajectory_quality.analyze_trajectory_quality(record, low_confidence_threshold=0.5, nominal_timing_tolerance=0.25, ball_diameter_mm=None)。它先复用正式 v0.1.0 轨迹校验器，然后只读统计记录帧数量、源索引缺口、同杆检测 ID 缺失、置信度低值和时间戳相对名义 FPS 的偏差。报告 JSON 可序列化、同输入结果稳定；每类仅显示最多 20 条示例，统计计数保留完整。
+
+未提供球直径时跳过重叠诊断，输出 null 而非 0。只有调用者提供经过测量的球直径，才计算二维球心间距疑似重叠；不能直接推断真实碰撞、入袋或掉帧。来源 ID 不是正式球号，坐标原点和方向仍待标定，名义 FPS 不是实测采集性能。当前没有前端质量卡或服务 API；本轮只覆盖 Python 核心。执行 uv run --locked pytest -q python/billiards_core/tests/test_trajectory_quality.py 和 uv run --locked ruff check .；自动化与本地状态按 M1.4 验证日志为准。
