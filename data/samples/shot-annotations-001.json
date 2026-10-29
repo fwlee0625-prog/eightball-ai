@@ -1,0 +1,21 @@
+{
+  "schema_version": "0.1.0",
+  "match_id": "synthetic-match-001",
+  "rack_id": "synthetic-rack-001",
+  "annotations": [
+    {
+      "shot_id": "synthetic-shot-001",
+      "expert_text": "合成讲解示例：先观察目标球的可行线路，结果需要依据实际观测确认。",
+      "text_source": "provided-transcript",
+      "relative_timestamp_ns": null,
+      "actual_observation": null
+    },
+    {
+      "shot_id": "synthetic-shot-002",
+      "expert_text": "合成讲解示例：比较停球位置与预期；本样例不提供击球结果证据。",
+      "text_source": "provided-transcript",
+      "relative_timestamp_ns": null,
+      "actual_observation": null
+    }
+  ]
+}

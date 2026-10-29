@@ -3,6 +3,8 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
 import trajectoryFixture from '../../../../data/samples/trajectory-001.json'
+import rackFixture from '../../../../data/samples/rack-playlist-001.json'
+import annotationsFixture from '../../../../data/samples/shot-annotations-001.json'
 import TrajectoryPlaybackPanel from '../components/TrajectoryPlaybackPanel.vue'
 import { createInitialTableState } from '../data/initialTableState'
 
@@ -187,6 +189,35 @@ describe('TrajectoryPlaybackPanel', () => {
       trajectory_id: 'csv-trajectory-001',
       state_version: 1,
     })
+  })
+
+
+  it('loads a rack bundle and links text to each shot without uploading', async () => {
+    const fetchMock = vi.fn<typeof fetch>()
+    vi.stubGlobal('fetch', fetchMock)
+    const wrapper = mountPanel()
+    const source = wrapper.get('#trajectory-file')
+    Object.defineProperty(source.element, 'files', {
+      configurable: true,
+      value: [{ name: 'rack.json', size: 12000, text: () => Promise.resolve(JSON.stringify(rackFixture)) }],
+    })
+    await source.trigger('change')
+    await flushPromises()
+    expect(wrapper.get('[data-testid="rack-shot-selector"]').text()).toContain('2 杆')
+    const notes = wrapper.get('#shot-annotations-file')
+    Object.defineProperty(notes.element, 'files', {
+      configurable: true,
+      value: [{ name: 'notes.json', size: 1200, text: () => Promise.resolve(JSON.stringify(annotationsFixture)) }],
+    })
+    await notes.trigger('change')
+    await flushPromises()
+    expect(wrapper.get('[data-testid="shot-annotation"]').text()).toContain('先观察目标球')
+    expect(wrapper.get('[data-testid="shot-annotation"]').text()).toContain('尚无独立观测证据')
+    await wrapper.get('[aria-label="切换杆次"]').setValue('1')
+    expect(wrapper.text()).toContain('synthetic-shot-002')
+    expect(wrapper.get('[data-testid="shot-annotation"]').text()).toContain('比较停球位置')
+    expect(wrapper.get('[data-testid="trajectory-frame-indicator"]').text()).toContain('原始索引 0')
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('reset token clears the loaded trajectory', async () => {

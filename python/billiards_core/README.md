@@ -55,3 +55,7 @@
 ## M1.8：像素到毫米的仿射预览（不代表真实标定）
 
 `billiards_core.calibration_profile.fit_affine_preview(profile)` 在独立 `calibration-preview.schema.json` v0.1.0 输入中计算二维仿射映射；3–32个显式像素/台面毫米对应点，拒绝退化、非法和超界输入；报告拟合残差和永远为 false 的 `physical_calibration_verified`。仿射不能纠正透视或畸变，不改变既有 `trajectory.schema.json`，也不改变 GLB 或球体模型尺寸。真实球径、袋口、台面方向和视觉映射仍待实测。
+
+## M1.9：已有职业讲解文本与逐杆观测分离
+
+`shot_annotations.validate_shot_annotations` 和 `link_shot_annotations` 只接受由项目提供并显式按 shot_id 关联的原始讲解文本（`text_source=provided-transcript`）；实际结果 `actual_observation` 默认为 null，手动记录时必须独立声明 `source=manual-note`。没有音频解析、语义提取、结果推断或跨杆自动对齐。 `m1_pipeline.summarize_m1_pipeline` 可将合成多杆、质量、运动候选、仿射预览、讲解文本聚合为确定性报告，始终声明真实世界验证未完成。

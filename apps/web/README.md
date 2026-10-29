@@ -72,3 +72,7 @@ API默认 `http://localhost:8000`，可复制 `.env.example` 为 `.env.local` �
 ## M1.7：一局多杆本地回放
 
 轨迹文件选择器现支持多杆 JSON（正式结构 packages/contracts/schemas/rack-playlist.schema.json）；每份包含显式人工顺序的 2–100 个逐杆记录，首杆版本需要匹配当前球局，同一 table_id 与几何下后续版本严格递增。切换杆次重置该杆时间轴及质量摘要；回放只读，不改变底层球局。每杆时间戳独立从 0 开始，不代表跨杆绝对时间；单杆 JSON/CSV 保持支持。
+
+## M1.9：已提供讲解文本的本地关联
+
+载入单杆或多杆轨迹后，可以选择符合 `packages/contracts/schemas/shot-annotations.schema.json` 的本地 JSON（每个 shot_id 一条原文与可选人工实际结果备注），只在本机按明确的 match_id/rack_id/shot_id 关联；切换杆次时显示对应文本，不上传。原文不作为物理证据或机器推导的实际结果；不包含音频识别或自动语义标签。

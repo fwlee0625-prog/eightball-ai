@@ -5,6 +5,8 @@ import trajectoryFixture from '../../../../data/samples/trajectory-001.json'
 import { parseTrajectoryJson } from '@/utils/trajectoryImport'
 import { parseTrajectoryCsv } from '@/utils/trajectoryCsvImport'
 import { parseRackPlaylistJson } from '@/utils/rackPlaylistImport'
+import { parseShotAnnotationsJson, validateAnnotationsForPlaylist } from '@/utils/shotAnnotationsImport'
+import type { ShotAnnotation } from '@/utils/shotAnnotationsImport'
 import { summarizeTrajectoryQuality } from '@/utils/trajectoryQualitySummary'
 import type { TableState } from '@/types/tableState'
 import type { TrajectoryFrame, TrajectoryRecord } from '@/types/trajectory'
@@ -25,6 +27,8 @@ const MAX_IMPORT_FILE_BYTES = 1024 * 1024
 const trajectory = ref<TrajectoryRecord | null>(null)
 const rackShots = ref<TrajectoryRecord[]>([])
 const selectedShotIndex = ref(0)
+const shotAnnotations = ref<ShotAnnotation[]>([])
+const annotationError = ref('')
 const currentFrameIndex = ref(0)
 const playheadNs = ref(0)
 const playbackRate = ref(1)
@@ -38,6 +42,9 @@ let lastAnimationTimeMs: number | null = null
 
 const currentFrame = computed(
   () => trajectory.value?.frames[currentFrameIndex.value] ?? null,
+)
+const activeAnnotation = computed(() =>
+  shotAnnotations.value.find((item) => item.shot_id === trajectory.value?.shot_id) ?? null,
 )
 const qualitySummary = computed(() =>
   trajectory.value ? summarizeTrajectoryQuality(trajectory.value) : null,
@@ -76,6 +83,8 @@ function clearTrajectory() {
   trajectory.value = null
   rackShots.value = []
   selectedShotIndex.value = 0
+  shotAnnotations.value = []
+  annotationError.value = ''
   currentFrameIndex.value = 0
   playheadNs.value = 0
   importPending.value = false
@@ -100,6 +109,8 @@ function loadTrajectory(record: TrajectoryRecord, fromRack = false) {
   if (!fromRack) {
     rackShots.value = []
     selectedShotIndex.value = 0
+    shotAnnotations.value = []
+    annotationError.value = ''
   }
   trajectory.value = record
   currentFrameIndex.value = 0
@@ -119,6 +130,8 @@ function loadRackShots(shots: TrajectoryRecord[]) {
   }
   rackShots.value = shots
   selectedShotIndex.value = 0
+  shotAnnotations.value = []
+  annotationError.value = ''
   loadTrajectory(first, true)
 }
 
@@ -182,6 +195,32 @@ async function importTrajectoryFile(event: Event) {
     }
   } finally {
     if (generation === importGeneration) importPending.value = false
+  }
+}
+
+async function importShotAnnotations(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  input.value = ''
+  annotationError.value = ''
+  if (!trajectory.value || file.size > MAX_IMPORT_FILE_BYTES || !file.name.toLowerCase().endsWith('.json')) {
+    annotationError.value = '请先载入轨迹，并选择不超过 1 MiB 的讲解 JSON。'
+    return
+  }
+  const reference = trajectory.value
+  const currentShots = rackShots.value.length ? [...rackShots.value] : [reference]
+  try {
+    const notes = parseShotAnnotationsJson(await file.text())
+    if (trajectory.value !== reference) return
+    validateAnnotationsForPlaylist(notes, {
+      match_id: reference.match_id,
+      rack_id: reference.rack_id,
+      shots: currentShots,
+    })
+    shotAnnotations.value = notes.annotations
+  } catch (cause) {
+    annotationError.value = cause instanceof Error ? cause.message : '讲解文本文件无法读取。'
   }
 }
 
@@ -321,6 +360,18 @@ onBeforeUnmount(pausePlayback)
         </label>
         <span>手动排序 · {{ rackShots.length }} 杆</span>
       </div>
+      <div class="trajectory-load-row">
+        <label class="trajectory-file-label" for="shot-annotations-file">关联已有职业讲解文本 JSON</label>
+        <input id="shot-annotations-file" class="trajectory-file-input" type="file" accept=".json,application/json" @change="importShotAnnotations" />
+      </div>
+      <p v-if="annotationError" class="trajectory-feedback trajectory-feedback--error" role="alert">{{ annotationError }}</p>
+      <section v-if="activeAnnotation" data-testid="shot-annotation" class="trajectory-quality" aria-label="当前杆次讲解文本">
+        <h4>职业讲解文本（已提供）</h4>
+        <p>{{ activeAnnotation.expert_text }}</p>
+        <p v-if="activeAnnotation.actual_observation">人工记录的实际结果：{{ activeAnnotation.actual_observation.raw_text }}</p>
+        <p v-else>实际结果：尚无独立观测证据</p>
+        <small>按 shot_id 显式关联；不会根据讲解自动推定真实击球或杆法。</small>
+      </section>
       <div class="trajectory-summary">
         <div>
           <span>当前单杆</span>
