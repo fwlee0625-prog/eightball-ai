@@ -29,6 +29,18 @@ function setSvgRect(wrapper: ReturnType<typeof mountEditor>) {
   return svg
 }
 
+function dispatchPointer(
+  target: Element,
+  type: 'pointerdown' | 'pointermove' | 'pointerup',
+  values: { button?: number; pointerId?: number; clientX: number; clientY: number },
+) {
+  const event = new Event(type, { bubbles: true, cancelable: true })
+  for (const [key, value] of Object.entries(values)) {
+    Object.defineProperty(event, key, { configurable: true, value })
+  }
+  target.dispatchEvent(event)
+}
+
 describe('TableTopDownEditor', () => {
   it('maps the origin and table boundaries to the normalized top-down board', () => {
     const wrapper = mountEditor()
@@ -45,10 +57,10 @@ describe('TableTopDownEditor', () => {
     const wrapper = mountEditor()
     setSvgRect(wrapper)
     const ball = wrapper.get('[data-ball-id="0"]')
-    await ball.trigger('pointerdown', {
+    dispatchPointer(ball.element, 'pointerdown', {
       button: 0, pointerId: 1, clientX: 127, clientY: 254,
     })
-    await wrapper.get('svg').trigger('pointerup', {
+    dispatchPointer(wrapper.get('svg').element, 'pointerup', {
       pointerId: 1, clientX: 127, clientY: 254,
     })
     expect(wrapper.emitted('select-ball')).toEqual([[0]])
@@ -58,13 +70,13 @@ describe('TableTopDownEditor', () => {
   it('emits one clamped coordinate update after a drag', async () => {
     const wrapper = mountEditor()
     setSvgRect(wrapper)
-    await wrapper.get('[data-ball-id="0"]').trigger('pointerdown', {
+    dispatchPointer(wrapper.get('[data-ball-id="0"]').element, 'pointerdown', {
       button: 0, pointerId: 1, clientX: 127, clientY: 254,
     })
-    await wrapper.get('svg').trigger('pointermove', {
+    dispatchPointer(wrapper.get('svg').element, 'pointermove', {
       pointerId: 1, clientX: 300, clientY: 600,
     })
-    await wrapper.get('svg').trigger('pointerup', {
+    dispatchPointer(wrapper.get('svg').element, 'pointerup', {
       pointerId: 1, clientX: 300, clientY: 600,
     })
     expect(wrapper.emitted('select-ball')).toEqual([[0]])
