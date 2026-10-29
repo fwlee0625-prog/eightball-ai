@@ -974,3 +974,57 @@ pnpm build
 - 最终回放与长片段提交 `710edbd7002fc1260ec7b52172c48f1e7e0a445b` 的 GitHub Actions push **40815461194** 与 PR **40815465455** 均 PASS。Web job **123255357667**：类型检查、Vitest、Oxlint、ESLint、build 全部通过，10 个测试文件 / 130 项通过，Vite build 808 ms；Python job **123255357446**：Ruff 通过、39 passed / 1 warning。保留既有 Vite 500 kB chunk 警告。此前失败的 CI 记录均保留。
 - **当前状态：远程 CI PASS；真实 PC 浏览器验收 NOT RUN。** 请 Codex 在本地验证：①恢复原始样例 v1 后载入合成轨迹；②点击播放/暂停，观察 ID 0/3 在 2D 与 3D 中同步移动；③逐帧按钮经过源帧索引 0、50、100、200、250、350；④将时间轴定位到 750 ms 时显示最近的已记录帧（源索引 100，时间戳 500 ms）；⑤更改播放倍率；⑥退出回放后原始 16 球、坐标、状态版本保持不变；⑦使用不同 table_id、state_version 或几何尺寸的轨迹时拒绝加载；⑧检查 1280×720 / 1440×900 PC 窗口、键盘焦点、Console 和 Network。记录截图和实际结果，不能用单测替代。
 - 不因回放 UI 可用而标记 M1 完成。CSV 导入、静止检测、击球边界、数据质量报告、真实 200 FPS 数据接入、视觉/GLB 几何标定及物理参数仍待完成。
+
+### R-015 本地 PC 真实浏览器续验（2026-10-29）
+
+**结论：PASS（本次轨迹回放验收范围；存在下述非阻塞警告及文档待更新项）。** 本段追加本地实测，不改写上文的远程 CI、历史失败与当时 NOT RUN 结论。
+
+- 执行环境：2026-10-29 14:16–14:24，Asia/Shanghai（UTC+08:00）；macOS 15.7.7 / 24G720、arm64；Node v24.12.0、pnpm 11.25.0。真实 Chromium 内嵌浏览器，localhost:5173；通过可访问性/鼠标/键盘及真实文件选择器操作，DOM 只读取证，未调用 Vue 方法或注入业务状态。
+- 开始前 `git status --short --branch`、当前分支和 HEAD 检查均退出0：工作区干净，分支 `fix/single-axis-coordinate-step-20261028`，HEAD `83fae9c425e01314f128810f7b96b6ab4997ffaf`。`git fetch origin` 退出0；远程同名分支 HEAD 相同，`git rev-list --left-right --count HEAD...origin/fix/single-axis-coordinate-step-20261028` 为 `0 0`，无需 pull/切换/快进。没有覆盖本地文件，没有 reset、clean、强制推送。
+- 已阅读适用的根目录、apps/web、docs 开发规范、README、历史验证记录及坐标契约。沿用 Spark 项目 `p_01047fdd` 的运行中 web 终端 `t_97940029`，启动命令 `pnpm dev --host localhost --port 5173`，cwd 为 apps/web；未另起或重启服务。
+- 本轮仅追加本验证日志；没有修改业务源码、测试、样例、GLB、依赖或锁文件，没有创建提交或推送。临时测试文件及全部本机证据目录：`/tmp/eightball-r015/`，未加入 Git，可能被系统清理。
+
+**本地自动化（cwd=apps/web，按表中顺序实际执行）**
+
+| 命令 | 退出码 | 实际输出与结果 |
+|---|---|---|
+| `pnpm type-check` | 0 | PASS；`vue-tsc --build` |
+| `pnpm exec vitest run` | 0 | PASS；Vitest 4.1.12，10 个文件、130 项测试全部通过；耗时 2.70s |
+| `pnpm exec oxlint .` | 0 | PASS；无诊断输出 |
+| `pnpm exec eslint .` | 0 | PASS；无诊断输出 |
+| `pnpm build` | 0 | PASS（有警告）；Vite 8.3.5，55 modules，built in 373ms；TableStudioView JS 689.44 kB / gzip 177.41 kB |
+
+- 完整命令、退出码与输出：`checks.json`、`1.log` 至 `5.log`。保留真实构建警告：`Some chunks are larger than 500 kB after minification.`；未调整阈值或隐藏警告。
+
+**真实浏览器操作与结果**
+
+1. **恢复样例 PASS**：点击“恢复原始样例”，实际显示 `STATE v1`、16 / 16；模型已载入。保存全部16球的可访问性坐标标签作为精度基线（`baseline.json`）。ID0 原坐标 `(-104.72715759277344, -515.1940307617188)`；ID3 原坐标 `(169.01455688476562, 323.2037353515625)`，单位 mm。
+2. **载入及双视图同步 PASS**：点击“载入合成样例”，显示 `REPLAY · v1`、synthetic-shot-001，6个记录帧、16球。首帧 ID0 `(-104.727158,-515.194031)`、ID3 `(169.014557,323.203735)`；末帧 ID0 `(455.272842,184.805969)`、ID3 `(-180.985443,743.203735)`。实际画面中两球在2D和Three.js场景共同变化，其余目标保留。对照截图 `07-both-views-first.png` / `08-both-views-last.png`，同一俯视相机和右侧滚动位置；另保存 `09-perspective.png` 验证切回3D后的透视场景。回放期间二维目标禁用、坐标编辑区显示只读提示。
+3. **播放、暂停 PASS**：真实点击播放后时间推进，0.25×下暂停于 `366.925 ms`；再经过350ms，仍为 `366.925 ms`（`pause.json`）。不是以单元测试替代浏览器播放。
+4. **前后逐帧 PASS**：实际逐次点击下一帧遍历源索引 `0→50→100→200→250→350`，对应 `0/250/500/1000/1250/1750 ms`；再逐次上一帧返回0。首帧上一帧、末帧下一帧禁用。完整顺序 `frame-sequence.json`，另有 `step.txt`。
+5. **五种倍率 PASS**：实际选择 0.25×、0.5×、1×、2×、4×，均从0播放至 `1750.000 ms`、第6帧/源索引350，自动恢复“播放”按钮（`rates.json`）。另外逐倍率采样真实时间推进，结果见下表与 `rate-progress.json`；采样包含UI自动化/读取耗时，不作为高精度计时基准或200FPS性能证明。
+
+| 倍率 | 读取间实际墙钟间隔 | 播放头起止（ms） | 推进量（ms） |
+|---|---|---|---|
+| 0.25× | 156ms | 54.175→91.650 | 37.475 |
+| 0.5× | 157ms | 108.550→183.800 | 75.250 |
+| 1× | 156ms | 216.800→366.800 | 150.000 |
+| 2× | 155ms | 433.400→733.400 | 300.000 |
+| 4× | 157ms | 866.800→1466.800 | 600.000 |
+
+6. **750ms seek PASS**：通过真实时间轴的可访问性 setValue 操作设为750（没有赋值DOM或调用Vue）；页面显示 `750.000 ms`、`3 / 6 帧 · 原始索引 100`，ID0 `(55.272842,-315.194031)`、ID3 `(69.014557,443.203735)`。随后实际点下一帧变1000ms/索引200，再上一帧回500ms/索引100，核对750选中的是500ms记录帧，没有插值。截图 `02-seek750-1440.png`。
+7. **退出保真 PASS**：退出回放后恢复 `STATE v1`、16球，全部16个坐标标签与开始前逐字比较完全一致（`restored.json` 的 exactRestoration=true），包括上述原始多位小数，不把轨迹六位小数写回会话。最终再次退出并恢复原始展示。
+8. **三类不匹配拒绝 PASS**：在临时目录复制现有 `data/samples/trajectory-001.json`，分别只改 `table_id="synthetic-other-table"`、`state_version=2`、`table_geometry.active_width_mm=1500`（活动长度仍2540），通过真实文件选择器分别导入。三者均未进入回放，全部16球坐标保持基线，状态显示仍v1；原始文件 `mismatch-table-id.json` / `mismatch-version.json` / `mismatch-geometry.json`，结果 `rejections.json`，各自 `reject-*.txt` 与截图 `reject-*.png`。实际提示依次为：
+   - `轨迹 table_id 与当前球桌不一致，已拒绝回放。`
+   - `轨迹 state_version 与当前球局不一致。请恢复或导入对应起始状态后再回放。`
+   - `轨迹活动台面尺寸与当前球局不一致，已拒绝回放。`
+9. **PC布局及键盘 PASS**：真实设置1280×720和1440×900；body scrollWidth/scrollHeight 分别等于1280/720和1440/900，无整体横向溢出或页面拉长，右侧面板独立滚动可访问回放、二维视图和恢复按钮。1280下实际鼠标点击时间轴中间显示875ms、索引100；Home→0、ArrowRight→17.500ms（仍首帧）、End→1750ms，Tab从时间轴进入“播放倍率”SELECT，可见焦点样式；截图 `05-playback-1280.png`、`06-keyboard-1280.png`、`keyboard.txt`。1440截图见首末帧和750定位；`layout1440.json`保存尺寸。测试结束reset临时视口。未做移动端适配验收。
+10. **Console / Network PASS（有警告）**：播放、逐帧、seek、三个本地文件导入期间，启用Network后记录的请求事件为0（`network.json`，无截断），未观察到轨迹上传API。另主动重载页面取证，110条请求/响应事件，无 loadingFailed、无HTTP≥400响应；`/model/billiards.glb` 返回200，页面模型已载入（`network-reload.json`）。Console只有Vite连接debug和阴影兼容警告，未见error：`THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead.`（`console.json` / `console-final.json`）。警告来源业务设置 `apps/web/src/components/PoolTableScene.vue:368`；最小复现为打开localhost工作台，和回放操作无关，本轮不修复。
+
+**限制、异常操作记录与建议**
+
+- 首次用自动化locator等待0.25×播放结束时，工具在约3秒提前超时；随后观察已正常结束，并改用各倍率的实际时长等待和推进量采样完整重验通过。对只读SVG目标调用工具press也未成功，未将其当作业务失败或键盘操作通过的证据；时间轴键盘及Tab焦点另行真实验证，结果如上。
+- 已发现非阻塞文档矛盾：`apps/web/README.md:35` 仍写“轨迹 JSON / CSV 导入、时间戳和 200FPS 回放仍未实现”，与已实现的JSON记录帧回放不一致；建议下轮修正文案，并保留CSV、真实200FPS与M1整体未完成的边界。本轮只修改验证日志。
+- 本轮没有发现需要业务修复的回放失败。构建体积和Three.js阴影警告保留供后续处理；本次PASS不代表无警告。
+- **NOT RUN**：真实200FPS采集/渲染性能测量、CSV导入、GLB朝向/真实台呢尺寸/球半径/物理参数标定、跨浏览器矩阵和完整屏幕阅读器验收；这些不由本轮回放功能成功推定通过。M1整体仍未完成。
+- 主要截图均为浏览器真实截图，另有 `01-first-frame-1440.png`、`03-last-frame-1440.png`、`04-2d-last-frame.png`、`10-restored.png`。证据仅保存在本机 `/tmp/eightball-r015/`，交接时应保留该目录。

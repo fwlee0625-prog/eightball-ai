@@ -102,7 +102,7 @@ CI使用 `uv.lock` 和 `apps/web/pnpm-lock.yaml`，不进行隐式依赖升级�
 
 - 先读根目录 AGENTS.md，再读目标模块内的 AGENTS.md 和 README.md。
 - 每次 Git commit 使用“英文类型前缀 + 中文改动摘要”，例如 `feat: 实现球桌模型几何标定`；详见根目录 AGENTS.md 的“Git 提交规范”。
-- 本地验证统一记录在 docs/verification/LOCAL_VALIDATION_LOG.md；未在真实环境执行的检查不得声称通过。
+- 验证提示词按“里程碑目录 / M 拆分项”保存到 [第一里程碑](docs/第一里程碑/) 、[第二里程碑](docs/第二里程碑/) 等目录，验证日志紧跟对应提示词；说“继续验证”时按根目录 AGENTS.md 定位当前里程碑下对应 M 的最新任务。docs/verification/LOCAL_VALIDATION_LOG.md 保留历史记录；未在真实环境执行的检查不得声称通过。
 - 以实际代码和测试为准；不把规划文档中的接口或功能当作已存在的实现。
 - 坐标系、单位、规则版本、状态版本和物理参数必须显式定义，不得靠隐式约定互相猜测。
 - 第三方库 API 以当前官方文档和已安装版本为准；先验证最小示例，不凭记忆猜接口。
