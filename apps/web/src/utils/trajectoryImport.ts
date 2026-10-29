@@ -150,7 +150,8 @@ export function parseTrajectoryJson(json: string): TrajectoryRecord {
   let previousFrameIndex = -1
   let previousTimestamp = -1
   const frameSchema = framesSchema.items
-  const ballSchema = frameSchema.properties.balls.items
+  const ballsSchema = frameSchema.properties.balls
+  const ballSchema = ballsSchema.items
 
   for (let framePosition = 0; framePosition < record.frames.length; framePosition += 1) {
     const frameName = `frames[${framePosition}]`
@@ -176,8 +177,8 @@ export function parseTrajectoryJson(json: string): TrajectoryRecord {
     }
 
     if (!Array.isArray(rawFrame.balls) ||
-      rawFrame.balls.length < ballSchema.minItems ||
-      rawFrame.balls.length > ballSchema.maxItems) {
+      rawFrame.balls.length < ballsSchema.minItems ||
+      rawFrame.balls.length > ballsSchema.maxItems) {
       throw new Error(`${frameName}.balls 必须包含 1 至 16 个检测目标。`)
     }
     const seenIds = new Set<number>()
