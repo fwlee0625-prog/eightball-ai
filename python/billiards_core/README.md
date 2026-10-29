@@ -51,3 +51,7 @@
 ## M1.7：一局多杆只读契约
 
 `billiards_core.rack_playlist.validate_rack_playlist` 和 `summarize_rack_playlist` 接受显式手动排序的多杆 JSON（`packages/contracts/schemas/rack-playlist.schema.json`）；检验同局同桌、跟踪 ID 契约、shot_id/trajectory_id 唯一、state_version 递增和坐标系一致；不推断击球边界或跨杆时间。合成样例 `data/samples/rack-playlist-001.json` 不证明物理状态连续。
+
+## M1.8：像素到毫米的仿射预览（不代表真实标定）
+
+`billiards_core.calibration_profile.fit_affine_preview(profile)` 在独立 `calibration-preview.schema.json` v0.1.0 输入中计算二维仿射映射；3–32个显式像素/台面毫米对应点，拒绝退化、非法和超界输入；报告拟合残差和永远为 false 的 `physical_calibration_verified`。仿射不能纠正透视或畸变，不改变既有 `trajectory.schema.json`，也不改变 GLB 或球体模型尺寸。真实球径、袋口、台面方向和视觉映射仍待实测。
