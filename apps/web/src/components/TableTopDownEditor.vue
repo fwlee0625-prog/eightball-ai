@@ -3,10 +3,11 @@ import { computed, ref, watch } from 'vue'
 
 import type { TableBallState, TableState } from '@/types/tableState'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   state: TableState
   selectedBallId: number | null
-}>()
+  readOnly?: boolean
+}>(), { readOnly: false })
 
 const emit = defineEmits<{
   (event: 'select-ball', id: number): void
@@ -88,7 +89,7 @@ function clearDrag() {
 }
 
 function startDrag(event: PointerEvent, ball: TableBallState) {
-  if (event.button > 0) return
+  if (props.readOnly || event.button > 0) return
   event.preventDefault()
   draggingId.value = ball.id
   dragPreview.value = { id: ball.id, x_mm: ball.x_mm, y_mm: ball.y_mm }
@@ -128,6 +129,12 @@ function finishDrag(event: PointerEvent) {
 }
 
 function handleKeydown(event: KeyboardEvent, ball: TableBallState) {
+  if (props.readOnly) {
+    if (['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+      event.preventDefault()
+    }
+    return
+  }
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault()
     emit('select-ball', ball.id)
@@ -204,6 +211,7 @@ watch(() => props.state.balls, () => {
           role="button"
           tabindex="0"
           :aria-pressed="ball.selected"
+          :aria-disabled="readOnly"
           :aria-label="`检测目标 ID ${ball.id}，X ${ball.x_mm} 毫米，Y ${ball.y_mm} 毫米`"
           @pointerdown.stop="startDrag($event, ball)"
           @keydown.stop="handleKeydown($event, ball)"

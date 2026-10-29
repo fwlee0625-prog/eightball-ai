@@ -4,6 +4,7 @@ import { mount } from '@vue/test-utils'
 
 import TableStudioView from '../views/TableStudioView.vue'
 import TableTopDownEditor from '../components/TableTopDownEditor.vue'
+import TrajectoryPlaybackPanel from '../components/TrajectoryPlaybackPanel.vue'
 import type { TableState } from '../types/tableState'
 
 const resetSceneView = vi.fn<() => void>()
@@ -178,6 +179,37 @@ describe('TableStudioView', () => {
     expect(scene.props('selectedBallId')).toBe(0)
     expect(wrapper.text()).toContain('当前 ID 0')
     expect(wrapper.text()).toContain('本地修改 · 未保存')
+  })
+
+  it('plays a compatible trajectory in 2D and 3D without mutating the live session', async () => {
+    const wrapper = mountStudio()
+    const scene = wrapper.findComponent(PoolTableSceneStub)
+    const topdown = wrapper.findComponent(TableTopDownEditor)
+    const playback = wrapper.findComponent(TrajectoryPlaybackPanel)
+    const initialState = scene.props('state') as TableState
+    const originalBall = initialState.balls.find((ball) => ball.id === 0)!
+
+    expect(playback.exists()).toBe(true)
+    await wrapper.get('.trajectory-sample-button').trigger('click')
+    await nextTick()
+    expect(scene.props('state')).toMatchObject({
+      source: 'synthetic-demo',
+      state_version: 1,
+    })
+    expect(topdown.props('readOnly')).toBe(true)
+    expect(wrapper.find('input[name="x"]').exists()).toBe(false)
+
+    await wrapper.get('[aria-label="下一帧"]').trigger('click')
+    await nextTick()
+    const replayState = scene.props('state') as TableState
+    expect(replayState.balls.find((ball) => ball.id === 0)?.x_mm).toBe(originalBall.x_mm + 8)
+    expect(replayState.state_version).toBe(initialState.state_version)
+    expect(wrapper.text()).toContain('REPLAY · v1')
+
+    await wrapper.get('.trajectory-clear-button').trigger('click')
+    await nextTick()
+    expect(scene.props('state')).toBe(initialState)
+    expect(topdown.props('readOnly')).toBe(false)
   })
 
   it('imports valid standard JSON, replaces the scene state, and increments the session version', async () => {

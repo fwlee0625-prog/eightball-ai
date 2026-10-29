@@ -4,10 +4,12 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import ApiHealthBadge from '@/components/ApiHealthBadge.vue'
 import PoolTableScene from '@/components/PoolTableScene.vue'
 import TableTopDownEditor from '@/components/TableTopDownEditor.vue'
+import TrajectoryPlaybackPanel from '@/components/TrajectoryPlaybackPanel.vue'
 import { createInitialTableState } from '@/data/initialTableState'
 import { parseTableStateJson } from '@/utils/tableStateImport'
 import { nextStateVersion } from '@/utils/stateVersion'
 import type { SceneStatus, TableBallState, TableState } from '@/types/tableState'
+import type { TrajectoryFrame, TrajectoryRecord } from '@/types/trajectory'
 
 interface SceneHandle {
   resetView: () => void
@@ -15,6 +17,9 @@ interface SceneHandle {
 }
 
 const state = ref<TableState>(createInitialTableState())
+const activeTrajectory = ref<TrajectoryRecord | null>(null)
+const playbackFrame = ref<TrajectoryFrame | null>(null)
+const playbackResetToken = ref(0)
 const selectedBallId = ref<number | null>(null)
 const showIds = ref(true)
 const isDirty = ref(false)
@@ -32,7 +37,20 @@ const sceneRef = ref<SceneHandle | null>(null)
 const selectedBall = computed<TableBallState | null>(
   () => state.value.balls.find((ball) => ball.id === selectedBallId.value) ?? null,
 )
-const ballCount = computed(() => state.value.balls.length)
+const isTrajectoryPlayback = computed(() => activeTrajectory.value !== null && playbackFrame.value !== null)
+const displayState = computed<TableState>(() => {
+  if (!activeTrajectory.value || !playbackFrame.value) return state.value
+  return {
+    ...state.value,
+    state_version: activeTrajectory.value.state_version,
+    source: activeTrajectory.value.source,
+    table_id: activeTrajectory.value.table_id,
+    coordinate_frame: activeTrajectory.value.coordinate_frame,
+    table_geometry: activeTrajectory.value.table_geometry,
+    balls: playbackFrame.value.balls.map((ball) => ({ ...ball })),
+  }
+})
+const ballCount = computed(() => displayState.value.balls.length)
 const xLimit = computed(() => state.value.table_geometry.active_width_mm / 2)
 const yLimit = computed(() => state.value.table_geometry.active_length_mm / 2)
 const trackingColors = [
@@ -73,6 +91,27 @@ function onModelStatus(status: SceneStatus) {
 
 function selectBall(id: number | null) {
   selectedBallId.value = id
+}
+
+function handleSceneSelectBall(id: number | null) {
+  if (isTrajectoryPlayback.value) return
+  selectBall(id)
+}
+
+function handleTopDownSelectBall(id: number) {
+  if (isTrajectoryPlayback.value) return
+  selectBall(id)
+}
+
+function onTrajectoryChange(record: TrajectoryRecord | null) {
+  activeTrajectory.value = record
+  playbackFrame.value = null
+  selectedBallId.value = null
+  coordinateError.value = ''
+}
+
+function onPlaybackFrameChange(frame: TrajectoryFrame | null) {
+  playbackFrame.value = frame
 }
 
 function commitBallPosition(ballId: number, x: number, y: number) {
@@ -118,6 +157,7 @@ function commitBallPosition(ballId: number, x: number, y: number) {
 }
 
 function moveBall(id: number, x: number, y: number) {
+  if (isTrajectoryPlayback.value) return
   selectedBallId.value = id
   commitBallPosition(id, x, y)
 }
@@ -152,6 +192,9 @@ function applyCoordinateEdit() {
 function resetState() {
   importGeneration += 1
   importPending.value = false
+  playbackResetToken.value += 1
+  activeTrajectory.value = null
+  playbackFrame.value = null
   importError.value = ''
   importNotice.value = ''
   state.value = createInitialTableState()
@@ -201,6 +244,9 @@ async function importStateFile(event: Event) {
 
     const nextVersion = nextStateVersion(Math.max(state.value.state_version, imported.state_version))
 
+    playbackResetToken.value += 1
+    activeTrajectory.value = null
+    playbackFrame.value = null
     state.value = { ...imported, state_version: nextVersion }
     selectedBallId.value = null
     coordinateError.value = ''
@@ -290,7 +336,7 @@ onBeforeUnmount(() => {
         <div class="header-badges">
           <ApiHealthBadge />
           <span class="header-badge"><span class="status-dot" />LOCAL SESSION</span>
-          <span class="version-badge">STATE v{{ state.state_version }}</span>
+          <span class="version-badge">{{ isTrajectoryPlayback ? 'REPLAY · v' : 'STATE v' }}{{ displayState.state_version }}</span>
         </div>
       </header>
 
@@ -310,10 +356,10 @@ onBeforeUnmount(() => {
           <div class="viewport-stage">
             <PoolTableScene
               ref="sceneRef"
-              :state="state"
-              :selected-ball-id="selectedBallId"
+              :state="displayState"
+              :selected-ball-id="isTrajectoryPlayback ? null : selectedBallId"
               :show-ids="showIds"
-              @select-ball="selectBall"
+              @select-ball="handleSceneSelectBall"
               @model-status="onModelStatus"
             />
             <div class="viewport-corner-label">
@@ -353,7 +399,7 @@ onBeforeUnmount(() => {
           <div class="inspector-heading">
             <span class="micro-label">02 / STATE INSPECTOR</span>
             <h2>球局数据</h2>
-            <p>当前视觉帧转换后的标准状态。</p>
+            <p>{{ isTrajectoryPlayback ? '按记录时间戳展示轨迹帧；回放期间只读。' : '当前视觉帧转换后的标准状态。' }}</p>
           </div>
 
           <div class="stats-grid">
@@ -363,7 +409,7 @@ onBeforeUnmount(() => {
             </div>
             <div class="stat-card">
               <span>状态版本</span>
-              <strong><small>v</small>{{ state.state_version }}</strong>
+              <strong><small>v</small>{{ displayState.state_version }}</strong>
             </div>
           </div>
 
@@ -389,10 +435,21 @@ onBeforeUnmount(() => {
             <p v-if="importError" class="import-feedback import-feedback--error" role="alert">{{ importError }}</p>
           </div>
 
+          <TrajectoryPlaybackPanel
+            :key="playbackResetToken"
+            :expected-table-id="state.table_id"
+            :expected-state-version="state.state_version"
+            :expected-geometry="state.table_geometry"
+            :reset-token="playbackResetToken"
+            @trajectory-change="onTrajectoryChange"
+            @frame-change="onPlaybackFrameChange"
+          />
+
           <TableTopDownEditor
-            :state="state"
-            :selected-ball-id="selectedBallId"
-            @select-ball="selectBall"
+            :state="displayState"
+            :selected-ball-id="isTrajectoryPlayback ? null : selectedBallId"
+            :read-only="isTrajectoryPlayback"
+            @select-ball="handleTopDownSelectBall"
             @move-ball="moveBall"
           />
 
@@ -403,7 +460,12 @@ onBeforeUnmount(() => {
               <span v-else class="section-muted">未选择</span>
             </div>
 
-            <div v-if="selectedBall" class="ball-editor">
+            <div v-if="isTrajectoryPlayback" class="trajectory-active-note" role="status">
+              <strong>轨迹回放中 · 只读</strong>
+              <p>当前坐标来自已加载轨迹帧。退出回放后返回当前球局状态，不会把轨迹帧写入原始状态。</p>
+            </div>
+
+            <div v-else-if="selectedBall" class="ball-editor">
               <div class="selected-ball-summary">
                 <span class="selected-ball-dot" :style="{ '--ball-color': selectedBallColor }" />
                 <div>
