@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
-from billiards_core.calibration_profile import fit_affine_preview, validate_calibration_profile
+from billiards_core.calibration_profile import fit_affine_preview
 
 ROOT = Path(__file__).resolve().parents[3]
 
