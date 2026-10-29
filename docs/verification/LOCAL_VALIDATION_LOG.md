@@ -722,3 +722,80 @@ pnpm build
 - Python job 122890731735，success：Ruff `All checks passed!`，pytest **30 passed, 1 warning**，保留既有警告。
 - 此前的两个代码提交曾因新单测中对 Vue 响应式 Proxy 使用 `structuredClone`、尺寸测试夹带越界坐标而导致 GitHub CI 失败；随后分别用普通补充提交 `f04de0b`、`8a96e28` 修正测试，最终上述远程工作流全部通过。历史失败不改写成通过。
 - **当前状态：远程 CI PASS；本地真实 JSON 文件选择、异常读入、无上传和画面渲染仍为 NOT RUN。** 本记录不代替 R-011 的浏览器证据，不将 M1 整体标记完成。
+
+
+#### R-011：M1 球局 JSON 导入本地验证（常规路径通过，版本上限编辑失败）
+
+- 日期/时区：2026-10-29，Asia/Shanghai；执行者：Codex。环境实际检查：macOS15.7.7 (24G720)、Node v24.12.0、pnpm11.25.0。所有检查沿用已有依赖，未安装或升级。
+- 开始前 `git status --short --branch` 退出0，仅输出 `## fix/single-axis-coordinate-step-20261028...origin/fix/single-axis-coordinate-step-20261028`，工作区干净；`git rev-parse HEAD` 退出0，为用户指定 `5a4f91ef8bf9c621f368f4655fe6ccd2ae82ad46`。GitHub connector实际读取PR #1远程head同为该SHA；本地origin对应引用一致，`git rev-list --left-right --count HEAD...origin/fix/single-axis-coordinate-step-20261028` 退出0、输出0/0。因此无需切换或更新工作树，没有执行reset/clean、强制切换、暂存或提交。
+- 已读根目录与apps/web的AGENTS.md、README.md、验证日志历史及V-011、docs/AGENTS.md、视觉输入与标准状态契约和实际JSON Schema；检查导入解析器、视图、样式及对应测试。只追加本文档，业务源码/测试/模型/依赖/样例均未修改。
+
+**五项检查（cwd=apps/web，按要求顺序实际执行）**
+
+| 命令 | 真实退出码 | 实际结果与关键输出 | 证据 |
+|---|---|---|---|
+| `pnpm type-check` | 0 | PASS；vue-tsc --build | `/tmp/eightball-r011/1.log` |
+| `pnpm exec vitest run` | 0 | PASS；6文件、81项通过，无未处理异常，耗时1.95s | `/tmp/eightball-r011/2.log` |
+| `pnpm exec oxlint .` | 0 | PASS；无诊断输出 | `/tmp/eightball-r011/3.log` |
+| `pnpm exec eslint .` | 0 | PASS；无诊断输出 | `/tmp/eightball-r011/4.log` |
+| `pnpm build` | 0 | PASS（有警告）；Vite8.3.5、47 modules、built in323ms，TableStudioView664.11kB/gzip170.89kB | `/tmp/eightball-r011/5.log` |
+
+- 完整命令/退出码/输出：`/tmp/eightball-r011/checks.json`。保留原有 `Some chunks are larger than 500 kB after minification` 警告，未隐藏或调整阈值。Python检查不在本轮要求内，本轮未重跑。
+
+**浏览器与验证文件**
+
+- 通过Spark `get_project({project:"p_01047fdd"})` 确认现有web终端running、监听5173；沿用平台管理的 `pnpm dev --host localhost --port 5173`，不重复启动/重启。真实内置浏览器访问localhost:5173，模型已载入、API健康已连接；导入全部由真实文件选择器setFiles完成，没有直接调用Vue方法或篡改应用状态。浏览器操作退出码N/A。
+- 原始文件为仓库 `data/samples/table-state-001.json`。额外文件仅生成于 `/tmp/eightball-r011/`，以原样例元数据生成合成状态：single.json 的source=synthetic-local-verification、table_id=synthetic-r011-single、文件版本7、单球ID0、X=123.456789012345、Y=-234.56789012345、confidence=0.9。其它非法文件每次只改变对应条件。文件大小/哈希保存在fixture-manifest.json；没有改写仓库样例。
+- 文件清单：single.json、wrong-version.json、invalid.json、duplicate-id.json、outside.json、other-size.json、empty-balls.json、missing-field.json、exact-limit.json（1048576字节）、oversize.json（1048577字节）、near-max-version.json。大小边界文件为相同合法单球JSON加尾随空白，避免将大小与语法错误混淆。
+
+| 实际操作 | 实际观察 | 状态 |
+|---|---|---|
+| 导入仓库table-state-001.json | 成功提示16个检测目标；STATE v1→v2，场景保留16球 | PASS |
+| 导入single.json（文件版本7） | 成功提示1个检测目标，场景只剩1球；会话版本v8，符合max(2,7)+1 | PASS |
+| 俯视实际点击导入ID0 | 选中正确ID，DOM input.value精确为123.456789012345、-234.56789012345；AX数值字段自身有float显示近似，另用DOM原始字符串核对，未将其误判成数据舍入 | PASS |
+| 选中ID0后分别导入错误文件 | 下述8类全部报错，保持v8、1球、VISION ID0和原始双轴精度不变 | PASS |
+| 只改导入球X=10并应用 | v8→v9，Y保持-234.56789012345 | PASS |
+| 再次选择同一个single.json | 可重新导入，v9→v10，清除旧选择，重置到文件坐标 | PASS |
+| 导入恰好1MiB的exact-limit.json | 成功，v10→v11；同内容加1字节的oversize.json则拒绝 | PASS |
+| 导入后俯视/切回3D、重置视角 | 控件可操作，截图可见单球与GLB桌体，视角切换正常 | PASS |
+| 恢复原始样例 | v1、16球、原table_id、清除选球与导入提示、默认视角恢复 | PASS |
+
+**错误提示与状态保护（真实文件逐项验证，均PASS）**
+
+- wrong-version.json：`schema_version 必须为 0.1.0。`
+- invalid.json：`文件不是有效的 JSON。`
+- duplicate-id.json：`视觉检测 ID 0 重复。`
+- outside.json（X=636）：`balls[0] 的坐标超出活动台面矩形。`
+- other-size.json（3000×1500mm，球坐标仍在范围内）：`当前工作台仅支持活动区域 2540 × 1270 mm，请先完成其它尺寸的球桌标定。`
+- oversize.json（1048577字节）：`文件超过 1 MiB 限制，请选择较小的标准球局 JSON。`
+- empty-balls.json：`balls 必须包含 1 至 16 个视觉检测目标。`
+- missing-field.json：`球局状态 缺少 coordinate_frame 字段。`
+- 每项在选中单球时重复验证，browser-states.json保存原始页面文本、输入字符串、alert；版本均保持v8、原坐标及ID0不变。首次对单球点选未命中（滚动及截图/客户端坐标比例不一致），经截图与canvas DOM矩形校正后命中；之后8项均在已选球状态重新执行，没有将未选球的初次操作当作选择保护证据。
+
+**手机宽度与键盘：PASS（模拟宽度，不是实体手机）**
+
+- 临时视口390×844与320×740，测试后已reset回默认。390px时document.scrollWidth=375、innerWidth=390；320px时二者均320，无页面横向溢出。320px下输入控件与多行尺寸错误提示均在x=28至292范围内，能完整换行阅读；role=alert保留。
+- 从恢复样例按钮按Shift+Tab确实聚焦原生file输入（activeId=table-state-file）；按Enter打开真实文件选择器并选择wrong-version.json，正确报错；再从file按Tab可到“恢复原始样例”，Enter清除错误；手机宽度下合法单球也能成功导入。覆盖实际键盘焦点、文件选择及恢复，无键盘陷阱。
+- 证据：mobile-error.png、mobile-success.png、mobile-320-error.png；对应状态记录在browser-states.json。未做全套屏幕阅读器/实体移动设备审计，不将模拟视口表述为真机验收。
+
+**网络与Console：PASS（本轮捕获窗口）**
+
+- 文件导入前开启CDP Network观察并保存cursor，覆盖样例、全部非法文件、单球、手机宽度及版本边界交互；读取requestWillBeSent/responseReceived/loadingFailed，network.json为eventCount=0、hasMore=false、truncated=false。捕获窗口没有网络请求、POST或API上传，源码导入路径也仅调用file.text/本地解析。页面最初已完成的API健康GET不属于导入上传，也不纳入该窗口。
+- Console无error，仅1个已知警告：`THREE.WebGLShadowMap: PCFSoftShadowMap has been removed. Using PCFShadowMap instead.`；console.json保存实际时间/来源。没有新增JS异常或资源失败；下述状态版本错误为业务逻辑问题，不会自动产生Console报错。
+
+**额外边界发现：高版本导入后编辑越过安全整数，版本停滞（FAIL）**
+
+- 位置：`apps/web/src/views/TableStudioView.vue:109`（坐标编辑直接+1，没有安全整数保护）；关联导入路径:168–171与解析器 `apps/web/src/utils/tableStateImport.ts:65–67`。
+- 最小复现文件：`/tmp/eightball-r011/near-max-version.json`，合法同尺寸v0.1.0单球状态，state_version=9007199254740990，ID0在(0,0)。该版本是安全整数，当前解析器允许它。
+- 真实浏览器步骤：恢复样例或任何正常局面→导入上述文件→成功成为v9007199254740991（MAX_SAFE_INTEGER）→俯视选ID0→只改X=10点击应用→再只改X=20点击应用。
+- 实际：第一次编辑状态变成 **v9007199254740992**，已经不是安全整数，无错误提示；第二次编辑X成功改变为20，但版本仍为 **v9007199254740992**，不再递增。取消选择并重新选球确认X确实写入20，排除“只改变草稿未提交”的情况；另一次重复复现结果一致。原始证据browser-states.json、version-overflow.png及包含完整版本/坐标的version-overflow-full.png。
+- 预期：在无法安全递增时明确拒绝变更并保留原状态，或使用始终可安全递增且符合契约的版本策略；不能让不同球局共用同一state_version。建议ChatGPT统一导入与坐标编辑的下一版本校验，并补“导入MAX_SAFE_INTEGER-1后连续编辑”的回归。不要靠删除断言或舍入版本解决；本轮严格不修复。
+
+**证据复核与结论**
+
+- 根目录内联Python读取browser-states.json，对样例v2、单球v8、8类非法文件保持v8/选球/精度、正常编辑v9、同文件v10、1MiB成功v11、最终恢复v1，以及高版本连续两次编辑停在同一版本进行断言，退出0，输出 `PASS: browser evidence assertions; expected routes passed and version-stall failure confirmed`。这是证据一致性复核，不是宣称版本边界通过。
+- 截图与日志均在 `/tmp/eightball-r011/`：sample-import.png、single-selected.png（初次未命中，非选球通过证据）、rejected-selected.png、import-error.png、single-oblique.png、手机截图、version-overflow-full.png、final-restored.png、browser-states.json、checks.json、network.json、console.json及输入文件。临时证据可能被清理，关键结果已在本记录内联保留。
+- GLB和前端锁文件实际SHA256复核未变，分别 `39f545f0f092c569b14d83c5eb1885a574484e8a4c04612cbfd05349101e0e0b`、`3dc9245952150f3ecf94a4c4781fc6709fb497c6951f0a58ddd770a26c3eb2ba`。
+- 未执行的真实浏览器分支：原生文件选择取消、底层文件读取失败、刻意延迟读取后恢复/编辑的竞态；未注入File.text或Vue内部状态伪造真浏览器证据。现有单元测试已实际覆盖读取失败与恢复时取消旧读取（包含在81项中），不等同于这些分支已做浏览器验收。用户本轮列出的主要浏览器项目均已完成，无环境类BLOCKED。
+- **最终状态：FAIL（高版本导入后的编辑安全性缺口）**；五项自动化及常规导入/错误保护/手机宽度/键盘/无上传验证PASS；几何标定仍NEEDS REVIEW，M1整体不标记完成。建议下一轮只修复版本递增并复跑本轮高版本复现、导入与编辑回归。
+- 收尾恢复原始样例v1/16球/未选择/默认视角；浏览器临时视口已清除，Spark开发服务保持运行。仅本文档有未提交修改，分支/HEAD仍为目标5a4f91e；未提交、推送、修改业务代码或测试。
