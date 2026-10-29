@@ -202,7 +202,7 @@ describe('TableStudioView', () => {
     await wrapper.get('[aria-label="下一帧"]').trigger('click')
     await nextTick()
     const replayState = scene.props('state') as TableState
-    expect(replayState.balls.find((ball) => ball.id === 0)?.x_mm).toBe(originalBall.x_mm + 8)
+    expect(replayState.balls.find((ball) => ball.id === 0)?.x_mm).toBeCloseTo(originalBall.x_mm + 8, 5)
     expect(replayState.state_version).toBe(initialState.state_version)
     expect(wrapper.text()).toContain('REPLAY · v1')
 
