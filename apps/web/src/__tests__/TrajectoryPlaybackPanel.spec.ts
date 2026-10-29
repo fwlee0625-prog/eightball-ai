@@ -120,8 +120,8 @@ describe('TrajectoryPlaybackPanel', () => {
     await wrapper.get('.trajectory-sample-button').trigger('click')
     await wrapper.get('.trajectory-clear-button').trigger('click')
     expect(wrapper.text()).toContain('载入合成样例或导入轨迹文件后')
-    expect(wrapper.emitted('trajectory-change')?.at(-1)).toEqual([null])
-    expect(wrapper.emitted('frame-change')?.at(-1)).toEqual([null])
+    expect(wrapper.emitted('trajectory-change')?.[1]).toEqual([null])
+    expect(wrapper.emitted('frame-change')?.[1]).toEqual([null])
   })
 
   it('imports a local JSON file through the file input', async () => {
@@ -147,6 +147,6 @@ describe('TrajectoryPlaybackPanel', () => {
     await wrapper.setProps({ resetToken: 1 })
     await nextTick()
     expect(wrapper.text()).toContain('载入合成样例或导入轨迹文件后')
-    expect(wrapper.emitted('trajectory-change')?.at(-1)).toEqual([null])
+    expect(wrapper.emitted('trajectory-change')?.[1]).toEqual([null])
   })
 })
