@@ -825,3 +825,11 @@ pnpm build
 - **防竞态与版本：** 复用 V-012 安全版本工具；版本达到 MAX_SAFE_INTEGER 时编辑拒绝，保留原状态并显示错误。拖拽预览期间不改共享状态，pointerup 后只提交一次；外部状态改变会取消拖动预览。
 - **自动化：** 代码提交后核对 GitHub Actions 实际运行，不将此处的计划当成通过。测试包括中心/边界映射、点击选择、指针拖拽限位、方向键步长、边界拒绝和父视图单次版本递增。
 - **本地浏览器：** NOT RUN。Codex 应在桌面浏览器中检查：① 从样例加载后 16 球都出现在 2D 顶视图；② 鼠标拖动球至中心/边缘，3D 场景和坐标输入同步，状态版本一次递增；③ 单击选择不改变坐标或版本；④ 方向键/Shift+方向键能精确移动并在边界限位；⑤ 导入单球后只有该球可拖动，恢复样例后恢复 16 球；⑥ 达到版本上限时拖动失败、原坐标不变且有可见错误；⑦ 检查 PC 常见窗口宽度、键盘焦点、Console 与 Network。记录截图、DOM坐标、版本前后值与真实环境，不要求移动端验证。
+
+
+**V-013 远程 CI 实际结果（2026-10-29）**
+
+- 初始功能提交 `b9810b5e9d94a4d669793b4cd88dd76102abf325` 的 GitHub Actions push 运行 **40803703214** 与 pull_request 运行 **40803709098** 均失败。失败发生在 `TableTopDownEditor.spec.ts` 的两项指针测试：Vue Test Utils 把 pointer 事件创建成 `MouseEvent`，随后尝试赋值只读 `button` 属性，尚未进入被测业务处理。保留该失败记录，不将其改写成通过。
+- 测试修复提交 `fa7b3863739fa37e5f90515ecf20b36959b2fe0e` 改为使用原生 DOM `Event` 并定义只需的指针坐标属性，再通过 `dispatchEvent` 触发组件监听器；未改变拖拽组件业务代码。
+- 修复后 GitHub Actions push 运行 **40803864479** status=completed、conclusion=success：https://github.com/fwlee0625-prog/eightball-ai/actions/runs/40803864479 。Web job **123218026416** success：锁文件安装、类型检查、Vitest、Oxlint、ESLint、build 全部成功，**8 个测试文件 / 99 项通过**，Vite build 767ms；保留原有大 chunk 警告。Python job **123218026170** success：Ruff通过、pytest **30 passed, 1 warning**。
+- **当前结论：远程 CI PASS；PC 真实浏览器的拖拽同步、高版本边界和鼠标/键盘操作仍为 NOT RUN。** 不将单测结果代替本地浏览器验收，也不标记 M1 完成。
