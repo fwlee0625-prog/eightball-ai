@@ -313,3 +313,18 @@ button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid 
 .trajectory-active-note strong { color: #c4e6cf; font-size: 10px; }
 .trajectory-active-note p { margin: 5px 0 0; }
 .topdown-ball[aria-disabled="true"] { cursor: default; }
+
+
+/* M1.5: compact, local-only trajectory diagnostics in the playback inspector. */
+.trajectory-quality { margin-top: 13px; padding: 10px; border: 1px solid rgba(136, 178, 150, .16); border-radius: 7px; background: rgba(12, 23, 17, .72); }
+.trajectory-quality__heading { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 9px; }
+.trajectory-quality__heading h4 { margin: 0; color: #c4e6cf; font-size: 10px; font-weight: 750; }
+.trajectory-quality__heading span { color: #6e9b7d; font-size: 7px; white-space: nowrap; }
+.trajectory-quality__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.trajectory-quality__grid > div { min-width: 0; padding: 7px; border: 1px solid rgba(136, 178, 150, .1); border-radius: 5px; background: rgba(255, 255, 255, .018); }
+.trajectory-quality__grid dt { color: #82998a; font-size: 8px; line-height: 1.45; }
+.trajectory-quality__grid dd { margin: 4px 0 0; color: #d1e6d7; font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.trajectory-quality__grid small { display: block; margin-top: 3px; color: #708577; font-size: 7px; line-height: 1.4; }
+.trajectory-quality__wide { grid-column: 1 / -1; }
+.trajectory-quality__wide dd { color: #d8bc88; font-size: 9px; }
+.trajectory-quality__note { margin: 8px 0 0; color: #7f9385; font-size: 8px; line-height: 1.6; }

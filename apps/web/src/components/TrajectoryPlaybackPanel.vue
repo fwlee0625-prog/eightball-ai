@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import trajectoryFixture from '../../../../data/samples/trajectory-001.json'
 import { parseTrajectoryJson } from '@/utils/trajectoryImport'
 import { parseTrajectoryCsv } from '@/utils/trajectoryCsvImport'
+import { summarizeTrajectoryQuality } from '@/utils/trajectoryQualitySummary'
 import type { TableState } from '@/types/tableState'
 import type { TrajectoryFrame, TrajectoryRecord } from '@/types/trajectory'
 
@@ -34,6 +35,9 @@ let lastAnimationTimeMs: number | null = null
 
 const currentFrame = computed(
   () => trajectory.value?.frames[currentFrameIndex.value] ?? null,
+)
+const qualitySummary = computed(() =>
+  trajectory.value ? summarizeTrajectoryQuality(trajectory.value) : null,
 )
 const durationNs = computed(() => {
   const frames = trajectory.value?.frames
@@ -335,6 +339,58 @@ onBeforeUnmount(pausePlayback)
         <span>{{ trajectory.timebase.nominal_fps }} FPS 名义采样</span>
       </div>
 
+      <section
+        v-if="qualitySummary"
+        class="trajectory-quality"
+        aria-labelledby="trajectory-quality-heading"
+        data-testid="trajectory-quality-summary"
+      >
+        <div class="trajectory-quality__heading">
+          <h4 id="trajectory-quality-heading">数据质量摘要</h4>
+          <span>本机计算 · 不上传</span>
+        </div>
+        <dl class="trajectory-quality__grid">
+          <div>
+            <dt>记录帧</dt>
+            <dd data-testid="quality-frame-count">{{ qualitySummary.frameCount }}</dd>
+          </div>
+          <div>
+            <dt>检测记录</dt>
+            <dd data-testid="quality-detection-count">{{ qualitySummary.observedDetectionCount }}</dd>
+          </div>
+          <div>
+            <dt>源帧索引缺口</dt>
+            <dd data-testid="quality-index-gaps">{{ qualitySummary.sourceIndexGapIntervals }} 段 / {{ qualitySummary.unrecordedSourceIndexes }} 个索引</dd>
+          </div>
+          <div>
+            <dt>缺失观测</dt>
+            <dd data-testid="quality-missing-observations">{{ qualitySummary.missingObservationCount }}</dd>
+            <small>{{ qualitySummary.framesWithMissingObservations }} 个受影响帧</small>
+          </div>
+          <div>
+            <dt>低置信度</dt>
+            <dd data-testid="quality-low-confidence">
+              {{ qualitySummary.confidenceObservationCount === 0
+                ? '未提供'
+                : qualitySummary.lowConfidenceObservationCount + ' / ' + qualitySummary.confidenceObservationCount }}
+            </dd>
+            <small>阈值 0.5</small>
+          </div>
+          <div>
+            <dt>名义时序偏差</dt>
+            <dd data-testid="quality-timing-outliers">{{ qualitySummary.nominalTimingOutlierIntervals }} 段</dd>
+            <small>与 {{ trajectory.timebase.nominal_fps }} FPS 比较</small>
+          </div>
+          <div class="trajectory-quality__wide">
+            <dt>球体重叠检查</dt>
+            <dd data-testid="quality-overlap-check">未执行（球径未标定）</dd>
+          </div>
+        </dl>
+        <p class="trajectory-quality__note">
+          索引缺口不等于确认的相机掉帧；缺失检测不推断进袋或跟踪丢失。
+          名义 FPS 仅用于诊断，回放仍以原始时间戳为准。GLB 模型尺寸不代表实测球径。
+        </p>
+      </section>
       <p class="trajectory-readonly-note">回放期间 2D / 3D 视图只读。按记录时间戳切换原始帧，不补造缺失检测；实际画面刷新受显示器刷新率限制。</p>
     </template>
     <p v-else-if="!error && !importPending" class="trajectory-empty">

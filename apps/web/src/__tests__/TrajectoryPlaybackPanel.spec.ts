@@ -58,6 +58,24 @@ describe('TrajectoryPlaybackPanel', () => {
     })
   })
 
+  it('shows a local-only quality summary for the loaded trajectory', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const wrapper = mountPanel()
+    await wrapper.get('.trajectory-sample-button').trigger('click')
+
+    const summary = wrapper.get('[data-testid="trajectory-quality-summary"]')
+    expect(summary.text()).toContain('本机计算 · 不上传')
+    expect(wrapper.get('[data-testid="quality-frame-count"]').text()).toBe('6')
+    expect(wrapper.get('[data-testid="quality-detection-count"]').text()).toBe('96')
+    expect(wrapper.get('[data-testid="quality-index-gaps"]').text()).toContain('5 段 / 345 个索引')
+    expect(wrapper.get('[data-testid="quality-missing-observations"]').text()).toBe('0')
+    expect(wrapper.get('[data-testid="quality-low-confidence"]').text()).toBe('未提供')
+    expect(wrapper.get('[data-testid="quality-timing-outliers"]').text()).toBe('0 段')
+    expect(wrapper.get('[data-testid="quality-overlap-check"]').text()).toContain('球径未标定')
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
   it('steps through recorded frames without inventing skipped source indexes', async () => {
     const wrapper = mountPanel()
     await wrapper.get('.trajectory-sample-button').trigger('click')
@@ -123,6 +141,7 @@ describe('TrajectoryPlaybackPanel', () => {
     await wrapper.get('.trajectory-sample-button').trigger('click')
     await wrapper.get('.trajectory-clear-button').trigger('click')
     expect(wrapper.text()).toContain('载入合成样例或导入轨迹文件后')
+    expect(wrapper.find('[data-testid="trajectory-quality-summary"]').exists()).toBe(false)
     expect(wrapper.emitted('trajectory-change')?.[1]).toEqual([null])
     expect(wrapper.emitted('frame-change')?.[1]).toEqual([null])
   })
