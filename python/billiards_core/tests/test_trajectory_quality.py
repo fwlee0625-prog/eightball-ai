@@ -66,6 +66,14 @@ class TrajectoryQualityTests(unittest.TestCase):
         self.assertEqual(report["warning_count"], 0)
         self.assertTrue(report["limitations"])
 
+    def test_limitations_disclose_unmeasured_ball_radius_and_glb_scope(self):
+        report = analyze_trajectory_quality(self.sample)
+        limitations = " ".join(report["limitations"]).casefold()
+        self.assertIn("ball radius/diameter has not been physically measured or calibrated", limitations)
+        self.assertIn("ball_diameter_mm is caller-supplied", limitations)
+        self.assertIn("a glb mesh dimension describes the model asset only", limitations)
+        self.assertIn("not a verified physical ball size", limitations)
+
     def test_immutable_input_and_repeatable_report(self):
         record = copy.deepcopy(self.sample)
         original = copy.deepcopy(record)

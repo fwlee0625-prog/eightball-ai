@@ -170,6 +170,8 @@ def analyze_trajectory_quality(
         "limitations": [
             "Tracking IDs are not confirmed cue-ball, group, or ball numbers.",
             "XY geometry and orientation remain provisional until measured.",
+            "Real-world ball radius/diameter has not been physically measured or calibrated; ball_diameter_mm is caller-supplied and does not itself prove calibration.",
+            "A GLB mesh dimension describes the model asset only, not a verified physical ball size.",
             "No frames, ball positions, pocketing, spin or motion states are inferred.",
             "Nominal FPS is metadata; not proof of capture or rendering performance.",
             "Examples are limited to 20 per category; aggregate counts are complete.",
