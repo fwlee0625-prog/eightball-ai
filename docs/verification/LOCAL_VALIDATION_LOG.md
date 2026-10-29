@@ -962,7 +962,7 @@ pnpm build
 **R-014 远程 CI 实际结果（2026-10-29）**
 
 - 初始契约提交 `eb27740b78bd27761546b23f320fe551dcb16cbb` 的 push / PR 运行 **40814248783**、**40814253539** 失败：TypeScript 读取球数组约束时从 `items` 元素 Schema 读取了 `minItems/maxItems`。在 `8c8ec300e124f87f1cb1bab7add3d4befe887d12` 中改为从数组 Schema 读取后，第二轮运行 **40814354085**、**40814360733** 因 Oxlint 的条件式 expect 测试规则失败；将无效 JSON 测试拆成独立用例后修复。
-- 最终契约校验提交 `b31a503128d51b707a9ea8a908a5a27e6a85cec7` 的 push **40814456402** 与 PR **40814450791** 均 PASS。Web：9 个测试文件、119 项通过，类型检查、Oxlint、ESLint、build 全通过；Python：Ruff通过、39 passed / 1 warning。合成样例同时通过 Draft 2020-12 Schema 自校验与 Python 领域校验。
+- 最终契约校验提交 `b31a503128d51b707a9ea8a908a5a27e6a85cec7` 的 push **40814450791** 与 PR **40814456402** 均 PASS。Web：9 个测试文件、119 项通过，类型检查、Oxlint、ESLint、build 全通过；Python：Ruff通过、39 passed / 1 warning。合成样例同时通过 Draft 2020-12 Schema 自校验与 Python 领域校验。
 - 以上失败运行保留为真实历史，不将修复前状态改写成通过。契约校验器的远程 CI 最终状态为 PASS；浏览器回放由 R-015 单独验收。
 
 ## R-015：时间戳驱动的轨迹回放 UI（远程 CI PASS，真实浏览器待验）
@@ -971,6 +971,6 @@ pnpm build
 - 导入只接受 trajectory Schema v0.1.0，文件上限 1 MiB；必须精确匹配当前 `table_id`、`state_version`、活动长度和宽度，否则拒绝或在状态变化后停止过期回放。回放不会写回状态，不自动补齐缺帧、不插值或推断球号。浏览器每次绘制按 `requestAnimationFrame` 推进时间并选择 timestamp 不大于播放头的最后一条已记录帧；画面刷新受显示器刷新率限制，不能据此声称实际渲染达到 200 FPS。
 - 合成样例由 35 ms 微片段扩展为 1.75 秒片段，以便在普通 PC 浏览器中观察播放。名义采样 200 FPS；原始帧索引为 0/50/100/200/250/350，时间戳为 0/250/500/1000/1250/1750 ms，明确保留大段缺帧。ID 0 与 ID 3 的坐标仅为合成演示，不代表真实比赛或物理仿真。
 - 自动化修正历史：首次回放提交的 CI **40814912176 / 40814917048** 因项目 TypeScript lib 不支持 `Array.at` 失败；修复数组末项访问后，**40815083626 / 40815089184** 暴露测试环境未 await Vue 更新及合成坐标保留精度断言问题；在 `9043e2d45e5cae029cf2309857a9f3ffb152b87c` 中修复。延长合成片段后，**40815393819 / 40815387571** 因测试仍断言旧帧索引和旧时间戳失败；在 `710edbd7002fc1260ec7b52172c48f1e7e0a445b` 中同步测试。
-- 最终回放与长片段提交 `710edbd7002fc1260ec7b52172c48f1e7e0a445b` 的 GitHub Actions push **40815465455** 与 PR **40815461194** 均 PASS。Web job **123255357667**：类型检查、Vitest、Oxlint、ESLint、build 全部通过，10 个测试文件 / 130 项通过，Vite build 808 ms；Python job **123255357446**：Ruff 通过、39 passed / 1 warning。保留既有 Vite 500 kB chunk 警告。此前失败的 CI 记录均保留。
+- 最终回放与长片段提交 `710edbd7002fc1260ec7b52172c48f1e7e0a445b` 的 GitHub Actions push **40815461194** 与 PR **40815465455** 均 PASS。Web job **123255357667**：类型检查、Vitest、Oxlint、ESLint、build 全部通过，10 个测试文件 / 130 项通过，Vite build 808 ms；Python job **123255357446**：Ruff 通过、39 passed / 1 warning。保留既有 Vite 500 kB chunk 警告。此前失败的 CI 记录均保留。
 - **当前状态：远程 CI PASS；真实 PC 浏览器验收 NOT RUN。** 请 Codex 在本地验证：①恢复原始样例 v1 后载入合成轨迹；②点击播放/暂停，观察 ID 0/3 在 2D 与 3D 中同步移动；③逐帧按钮经过源帧索引 0、50、100、200、250、350；④将时间轴定位到 750 ms 时显示最近的已记录帧（源索引 100，时间戳 500 ms）；⑤更改播放倍率；⑥退出回放后原始 16 球、坐标、状态版本保持不变；⑦使用不同 table_id、state_version 或几何尺寸的轨迹时拒绝加载；⑧检查 1280×720 / 1440×900 PC 窗口、键盘焦点、Console 和 Network。记录截图和实际结果，不能用单测替代。
 - 不因回放 UI 可用而标记 M1 完成。CSV 导入、静止检测、击球边界、数据质量报告、真实 200 FPS 数据接入、视觉/GLB 几何标定及物理参数仍待完成。
