@@ -40,7 +40,7 @@ def test_noisy_extra_landmark_does_not_silently_claim_perfect_fit():
 
 
 @pytest.mark.parametrize("mutate", [
-    lambda v: v["landmarks"].pop(),
+    lambda v: v.update(landmarks=v["landmarks"][:2]),
     lambda v: v["landmarks"][0].update(pixel_x=float("nan")),
     lambda v: v["landmarks"][0].update(x_mm=700),
     lambda v: v.update(ball_diameter_mm=True),

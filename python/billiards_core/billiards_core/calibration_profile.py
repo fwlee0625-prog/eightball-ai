@@ -58,10 +58,15 @@ def validate_calibration_profile(value: Any) -> None:
     landmarks = profile["landmarks"]
     if not isinstance(landmarks, list) or not 3 <= len(landmarks) <= 32:
         raise ValueError("landmarks must contain between 3 and 32 point pairs")
+    seen_pixels: set[tuple[float, float]] = set()
     for i, raw in enumerate(landmarks):
         point = _object(raw, {"pixel_x", "pixel_y", "x_mm", "y_mm"}, f"landmarks[{i}]")
         for field in ("pixel_x", "pixel_y", "x_mm", "y_mm"):
             _finite(point[field], f"landmarks[{i}].{field}")
+        pixel = (float(point["pixel_x"]), float(point["pixel_y"]))
+        if pixel in seen_pixels:
+            raise ValueError("duplicate pixel landmark")
+        seen_pixels.add(pixel)
         if abs(point["x_mm"]) > width / 2 or abs(point["y_mm"]) > length / 2:
             raise ValueError("landmark lies outside active table")
 
