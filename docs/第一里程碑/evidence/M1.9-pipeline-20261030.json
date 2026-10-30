@@ -1,0 +1,451 @@
+{
+  "report_version": "0.1.0",
+  "status": "synthetic_or_unverified_preview",
+  "rack": {
+    "report_version": "0.1.0",
+    "match_id": "synthetic-match-001",
+    "rack_id": "synthetic-rack-001",
+    "table_id": "vision-table-001",
+    "sequence_origin": "manual",
+    "shot_count": 2,
+    "shots": [
+      {
+        "order": 1,
+        "shot_id": "synthetic-shot-001",
+        "trajectory_id": "synthetic-trajectory-001",
+        "state_version": 1,
+        "frame_count": 6,
+        "duration_ns": 1750000000,
+        "timestamp_origin": "shot_start"
+      },
+      {
+        "order": 2,
+        "shot_id": "synthetic-shot-002",
+        "trajectory_id": "synthetic-trajectory-002",
+        "state_version": 2,
+        "frame_count": 6,
+        "duration_ns": 1750000000,
+        "timestamp_origin": "shot_start"
+      }
+    ],
+    "limitations": [
+      "Shot order is supplied by the user, not inferred from observed XY motion.",
+      "Each shot has an independent nanosecond timebase starting at shot_start; no wall-clock or cross-shot duration is derived.",
+      "Strictly increasing state_version tracks snapshots, not verified physical continuity or confirmed strikes.",
+      "Tracking IDs and real-world geometry remain provisional."
+    ]
+  },
+  "calibration": {
+    "report_version": "0.1.0",
+    "profile_id": "synthetic-affine-preview-001",
+    "table_id": "vision-table-001",
+    "source_kind": "synthetic",
+    "coordinate_units": "mm",
+    "input_units": "pixels",
+    "mapping_type": "2d_affine_preview",
+    "orientation_status": "provisional",
+    "matrix_x": [
+      2.0,
+      0.0,
+      0.0
+    ],
+    "matrix_y": [
+      0.0,
+      3.0,
+      0.0
+    ],
+    "landmark_count": 4,
+    "rms_residual_mm": 0.0,
+    "max_residual_mm": 0.0,
+    "ball_diameter_mm": null,
+    "pocket_centers_provided": false,
+    "physical_calibration_verified": false,
+    "limitations": [
+      "Affine 2D mapping cannot correct perspective distortion or lens effects.",
+      "In-sample residuals do not measure external calibration accuracy.",
+      "No real-world coordinate directions, ball diameter or pocket geometry are verified.",
+      "A supplied measurement or GLB mesh dimension is not independent physical verification.",
+      "Preview parameters must not silently replace trajectory or model transforms."
+    ]
+  },
+  "commentary": {
+    "report_version": "0.1.0",
+    "match_id": "synthetic-match-001",
+    "rack_id": "synthetic-rack-001",
+    "linked_shot_count": 2,
+    "shots": [
+      {
+        "shot_id": "synthetic-shot-001",
+        "expert_text": "合成讲解示例：先观察目标球的可行线路，结果需要依据实际观测确认。",
+        "text_source": "provided-transcript",
+        "relative_timestamp_ns": null,
+        "actual_observation": null
+      },
+      {
+        "shot_id": "synthetic-shot-002",
+        "expert_text": "合成讲解示例：比较停球位置与预期；本样例不提供击球结果证据。",
+        "text_source": "provided-transcript",
+        "relative_timestamp_ns": null,
+        "actual_observation": null
+      }
+    ],
+    "limitations": [
+      "Text was already transcribed and explicitly linked to shot_id; no audio processing or NLP inference.",
+      "Expert description is advice, not an observed event or physically verified result.",
+      "An optional manual actual_observation is a human note, not confirmed tracker evidence.",
+      "Missing timestamps remain null; no cross-shot wall-clock alignment is inferred."
+    ]
+  },
+  "shots": [
+    {
+      "shot_id": "synthetic-shot-001",
+      "trajectory_id": "synthetic-trajectory-001",
+      "quality": {
+        "report_version": "0.1.0",
+        "trajectory_id": "synthetic-trajectory-001",
+        "shot_id": "synthetic-shot-001",
+        "input_provenance_kind": "synthetic",
+        "frame_count": 6,
+        "duration_ns": 1750000000,
+        "observed_detection_count": 96,
+        "observed_detection_ids": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "source_index_gap_intervals": 5,
+        "unrecorded_source_indexes": 345,
+        "source_gap_examples": [
+          {
+            "previous_frame_index": 0,
+            "next_frame_index": 50,
+            "unrecorded_source_indexes": 49
+          },
+          {
+            "previous_frame_index": 50,
+            "next_frame_index": 100,
+            "unrecorded_source_indexes": 49
+          },
+          {
+            "previous_frame_index": 100,
+            "next_frame_index": 200,
+            "unrecorded_source_indexes": 99
+          },
+          {
+            "previous_frame_index": 200,
+            "next_frame_index": 250,
+            "unrecorded_source_indexes": 49
+          },
+          {
+            "previous_frame_index": 250,
+            "next_frame_index": 350,
+            "unrecorded_source_indexes": 99
+          }
+        ],
+        "missing_observation_count": 0,
+        "frames_with_missing_observations": 0,
+        "missing_observation_examples": [],
+        "confidence_observation_count": 0,
+        "low_confidence_threshold": 0.5,
+        "low_confidence_observation_count": 0,
+        "nominal_timing_tolerance": 0.25,
+        "nominal_timing_outlier_intervals": 0,
+        "nominal_timing_examples": [],
+        "overlap_check": "skipped_no_diameter",
+        "ball_diameter_mm": null,
+        "suspected_xy_overlap_count": null,
+        "suspected_xy_overlap_examples": [],
+        "warning_count": 1,
+        "warnings": [
+          {
+            "code": "source_index_gaps",
+            "count": 345,
+            "meaning": "Source indexes are not all recorded; capture loss unproven."
+          }
+        ],
+        "limitations": [
+          "Tracking IDs are not confirmed cue-ball, group, or ball numbers.",
+          "XY geometry and orientation remain provisional until measured.",
+          "Real-world ball radius/diameter has not been physically measured or calibrated; ball_diameter_mm is caller-supplied and does not itself prove calibration.",
+          "A GLB mesh dimension describes the model asset only, not a verified physical ball size.",
+          "No frames, ball positions, pocketing, spin or motion states are inferred.",
+          "Nominal FPS is metadata; not proof of capture or rendering performance.",
+          "Examples are limited to 20 per category; aggregate counts are complete."
+        ]
+      },
+      "motion": {
+        "report_version": "0.1.0",
+        "trajectory_id": "synthetic-trajectory-001",
+        "shot_id": "synthetic-shot-001",
+        "stationary_speed_mm_s": 2.0,
+        "moving_speed_mm_s": 20.0,
+        "min_run_intervals": 2,
+        "min_confidence": 0.5,
+        "interval_count": 5,
+        "stationary_interval_count": 0,
+        "moving_interval_count": 0,
+        "unknown_interval_count": 5,
+        "intervals": [
+          {
+            "from_frame_index": 0,
+            "to_frame_index": 50,
+            "start_ns": 0,
+            "end_ns": 250000000,
+            "state": "unknown",
+            "reason": "source_index_gap",
+            "max_displacement_mm": null,
+            "max_speed_mm_s": null
+          },
+          {
+            "from_frame_index": 50,
+            "to_frame_index": 100,
+            "start_ns": 250000000,
+            "end_ns": 500000000,
+            "state": "unknown",
+            "reason": "source_index_gap",
+            "max_displacement_mm": null,
+            "max_speed_mm_s": null
+          },
+          {
+            "from_frame_index": 100,
+            "to_frame_index": 200,
+            "start_ns": 500000000,
+            "end_ns": 1000000000,
+            "state": "unknown",
+            "reason": "source_index_gap",
+            "max_displacement_mm": null,
+            "max_speed_mm_s": null
+          },
+          {
+            "from_frame_index": 200,
+            "to_frame_index": 250,
+            "start_ns": 1000000000,
+            "end_ns": 1250000000,
+            "state": "unknown",
+            "reason": "source_index_gap",
+            "max_displacement_mm": null,
+            "max_speed_mm_s": null
+          },
+          {
+            "from_frame_index": 250,
+            "to_frame_index": 350,
+            "start_ns": 1250000000,
+            "end_ns": 1750000000,
+            "state": "unknown",
+            "reason": "source_index_gap",
+            "max_displacement_mm": null,
+            "max_speed_mm_s": null
+          }
+        ],
+        "boundary_candidates": [],
+        "limitations": [
+          "These are XY observation-state candidates, NOT verified cue strikes or shot boundaries.",
+          "Source-index gaps, missing IDs and low confidence are unknown, never assumed stationary.",
+          "Thresholds are configurable diagnostics, not calibrated physics or proven noise levels.",
+          "Tracking IDs do not identify cue ball or canonical ball numbers.",
+          "A continuous ID does not prove stable object identity across tracker switches.",
+          "No spin, impact, pocketing or motion between observed frames is inferred.",
+          "Coordinate direction and real-world geometry remain uncalibrated."
+        ]
+      },
+      "annotation": {
+        "shot_id": "synthetic-shot-001",
+        "expert_text": "合成讲解示例：先观察目标球的可行线路，结果需要依据实际观测确认。",
+        "text_source": "provided-transcript",
+        "relative_timestamp_ns": null,
+        "actual_observation": null
+      }
+    },
+    {
+      "shot_id": "synthetic-shot-002",
+      "trajectory_id": "synthetic-trajectory-002",
+      "quality": {
+        "report_version": "0.1.0",
+        "trajectory_id": "synthetic-trajectory-002",
+        "shot_id": "synthetic-shot-002",
+        "input_provenance_kind": "synthetic",
+        "frame_count": 6,
+        "duration_ns": 1750000000,
+        "observed_detection_count": 96,
+        "observed_detection_ids": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "source_index_gap_intervals": 5,
+        "unrecorded_source_indexes": 345,
+        "source_gap_examples": [
+          {
+            "previous_frame_index": 0,
+            "next_frame_index": 50,
+            "unrecorded_source_indexes": 49
+          },
+          {
+            "previous_frame_index": 50,
+            "next_frame_index": 100,
+            "unrecorded_source_indexes": 49
+          },
+          {
+            "previous_frame_index": 100,
+            "next_frame_index": 200,
+            "unrecorded_source_indexes": 99
+          },
+          {
+            "previous_frame_index": 200,
+            "next_frame_index": 250,
+            "unrecorded_source_indexes": 49
+          },
+          {
+            "previous_frame_index": 250,
+            "next_frame_index": 350,
+            "unrecorded_source_indexes": 99
+          }
+        ],
+        "missing_observation_count": 0,
+        "frames_with_missing_observations": 0,
+        "missing_observation_examples": [],
+        "confidence_observation_count": 0,
+        "low_confidence_threshold": 0.5,
+        "low_confidence_observation_count": 0,
+        "nominal_timing_tolerance": 0.25,
+        "nominal_timing_outlier_intervals": 0,
+        "nominal_timing_examples": [],
+        "overlap_check": "skipped_no_diameter",
+        "ball_diameter_mm": null,
+        "suspected_xy_overlap_count": null,
+        "suspected_xy_overlap_examples": [],
+        "warning_count": 1,
+        "warnings": [
+          {
+            "code": "source_index_gaps",
+            "count": 345,
+            "meaning": "Source indexes are not all recorded; capture loss unproven."
+          }
+        ],
+        "limitations": [
+          "Tracking IDs are not confirmed cue-ball, group, or ball numbers.",
+          "XY geometry and orientation remain provisional until measured.",
+          "Real-world ball radius/diameter has not been physically measured or calibrated; ball_diameter_mm is caller-supplied and does not itself prove calibration.",
+          "A GLB mesh dimension describes the model asset only, not a verified physical ball size.",
+          "No frames, ball positions, pocketing, spin or motion states are inferred.",
+          "Nominal FPS is metadata; not proof of capture or rendering performance.",
+          "Examples are limited to 20 per category; aggregate counts are complete."
+        ]
+      },
+      "motion": {
+        "report_version": "0.1.0",
+        "trajectory_id": "synthetic-trajectory-002",
+        "shot_id": "synthetic-shot-002",
+        "stationary_speed_mm_s": 2.0,
+        "moving_speed_mm_s": 20.0,
+        "min_run_intervals": 2,
+        "min_confidence": 0.5,
+        "interval_count": 5,
+        "stationary_interval_count": 0,
+        "moving_interval_count": 0,
+        "unknown_interval_count": 5,
+        "intervals": [
+          {
+            "from_frame_index": 0,
+            "to_frame_index": 50,
+            "start_ns": 0,
+            "end_ns": 250000000,
+            "state": "unknown",
+            "reason": "source_index_gap",
+            "max_displacement_mm": null,
+            "max_speed_mm_s": null
+          },
+          {
+            "from_frame_index": 50,
+            "to_frame_index": 100,
+            "start_ns": 250000000,
+            "end_ns": 500000000,
+            "state": "unknown",
+            "reason": "source_index_gap",
+            "max_displacement_mm": null,
+            "max_speed_mm_s": null
+          },
+          {
+            "from_frame_index": 100,
+            "to_frame_index": 200,
+            "start_ns": 500000000,
+            "end_ns": 1000000000,
+            "state": "unknown",
+            "reason": "source_index_gap",
+            "max_displacement_mm": null,
+            "max_speed_mm_s": null
+          },
+          {
+            "from_frame_index": 200,
+            "to_frame_index": 250,
+            "start_ns": 1000000000,
+            "end_ns": 1250000000,
+            "state": "unknown",
+            "reason": "source_index_gap",
+            "max_displacement_mm": null,
+            "max_speed_mm_s": null
+          },
+          {
+            "from_frame_index": 250,
+            "to_frame_index": 350,
+            "start_ns": 1250000000,
+            "end_ns": 1750000000,
+            "state": "unknown",
+            "reason": "source_index_gap",
+            "max_displacement_mm": null,
+            "max_speed_mm_s": null
+          }
+        ],
+        "boundary_candidates": [],
+        "limitations": [
+          "These are XY observation-state candidates, NOT verified cue strikes or shot boundaries.",
+          "Source-index gaps, missing IDs and low confidence are unknown, never assumed stationary.",
+          "Thresholds are configurable diagnostics, not calibrated physics or proven noise levels.",
+          "Tracking IDs do not identify cue ball or canonical ball numbers.",
+          "A continuous ID does not prove stable object identity across tracker switches.",
+          "No spin, impact, pocketing or motion between observed frames is inferred.",
+          "Coordinate direction and real-world geometry remain uncalibrated."
+        ]
+      },
+      "annotation": {
+        "shot_id": "synthetic-shot-002",
+        "expert_text": "合成讲解示例：比较停球位置与预期；本样例不提供击球结果证据。",
+        "text_source": "provided-transcript",
+        "relative_timestamp_ns": null,
+        "actual_observation": null
+      }
+    }
+  ],
+  "real_world_validation_complete": false,
+  "limitations": [
+    "Only contract validity and deterministic synthetic integration are checked.",
+    "No real camera calibration, expert interpretation, physics accuracy or 200FPS benchmark is claimed.",
+    "Movement candidates do not prove cue impacts; annotations do not prove actual outcomes."
+  ]
+}
