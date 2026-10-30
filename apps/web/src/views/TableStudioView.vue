@@ -335,6 +335,7 @@ onBeforeUnmount(() => {
         </div>
         <div class="header-badges">
           <ApiHealthBadge />
+          <a class="header-badge" href="/roadmap" style="text-decoration: none;">开发看板</a>
           <span class="header-badge"><span class="status-dot" />LOCAL SESSION</span>
           <span class="version-badge">{{ isTrajectoryPlayback ? 'REPLAY · v' : 'STATE v' }}{{ displayState.state_version }}</span>
         </div>
