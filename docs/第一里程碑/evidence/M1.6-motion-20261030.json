@@ -1,0 +1,197 @@
+{
+  "sample_report": {
+    "report_version": "0.1.0",
+    "trajectory_id": "synthetic-trajectory-001",
+    "shot_id": "synthetic-shot-001",
+    "stationary_speed_mm_s": 2.0,
+    "moving_speed_mm_s": 20.0,
+    "min_run_intervals": 2,
+    "min_confidence": 0.5,
+    "interval_count": 5,
+    "stationary_interval_count": 0,
+    "moving_interval_count": 0,
+    "unknown_interval_count": 5,
+    "intervals": [
+      {
+        "from_frame_index": 0,
+        "to_frame_index": 50,
+        "start_ns": 0,
+        "end_ns": 250000000,
+        "state": "unknown",
+        "reason": "source_index_gap",
+        "max_displacement_mm": null,
+        "max_speed_mm_s": null
+      },
+      {
+        "from_frame_index": 50,
+        "to_frame_index": 100,
+        "start_ns": 250000000,
+        "end_ns": 500000000,
+        "state": "unknown",
+        "reason": "source_index_gap",
+        "max_displacement_mm": null,
+        "max_speed_mm_s": null
+      },
+      {
+        "from_frame_index": 100,
+        "to_frame_index": 200,
+        "start_ns": 500000000,
+        "end_ns": 1000000000,
+        "state": "unknown",
+        "reason": "source_index_gap",
+        "max_displacement_mm": null,
+        "max_speed_mm_s": null
+      },
+      {
+        "from_frame_index": 200,
+        "to_frame_index": 250,
+        "start_ns": 1000000000,
+        "end_ns": 1250000000,
+        "state": "unknown",
+        "reason": "source_index_gap",
+        "max_displacement_mm": null,
+        "max_speed_mm_s": null
+      },
+      {
+        "from_frame_index": 250,
+        "to_frame_index": 350,
+        "start_ns": 1250000000,
+        "end_ns": 1750000000,
+        "state": "unknown",
+        "reason": "source_index_gap",
+        "max_displacement_mm": null,
+        "max_speed_mm_s": null
+      }
+    ],
+    "boundary_candidates": [],
+    "limitations": [
+      "These are XY observation-state candidates, NOT verified cue strikes or shot boundaries.",
+      "Source-index gaps, missing IDs and low confidence are unknown, never assumed stationary.",
+      "Thresholds are configurable diagnostics, not calibrated physics or proven noise levels.",
+      "Tracking IDs do not identify cue ball or canonical ball numbers.",
+      "A continuous ID does not prove stable object identity across tracker switches.",
+      "No spin, impact, pocketing or motion between observed frames is inferred.",
+      "Coordinate direction and real-world geometry remain uncalibrated."
+    ]
+  },
+  "continuous_fixture_report": {
+    "report_version": "0.1.0",
+    "trajectory_id": "synthetic-trajectory-001",
+    "shot_id": "synthetic-shot-001",
+    "stationary_speed_mm_s": 2.0,
+    "moving_speed_mm_s": 20.0,
+    "min_run_intervals": 2,
+    "min_confidence": 0.5,
+    "interval_count": 8,
+    "stationary_interval_count": 5,
+    "moving_interval_count": 3,
+    "unknown_interval_count": 0,
+    "intervals": [
+      {
+        "from_frame_index": 0,
+        "to_frame_index": 1,
+        "start_ns": 0,
+        "end_ns": 5000000,
+        "state": "stationary",
+        "reason": null,
+        "max_displacement_mm": 0.0,
+        "max_speed_mm_s": 0.0
+      },
+      {
+        "from_frame_index": 1,
+        "to_frame_index": 2,
+        "start_ns": 5000000,
+        "end_ns": 10000000,
+        "state": "stationary",
+        "reason": null,
+        "max_displacement_mm": 0.0,
+        "max_speed_mm_s": 0.0
+      },
+      {
+        "from_frame_index": 2,
+        "to_frame_index": 3,
+        "start_ns": 10000000,
+        "end_ns": 15000000,
+        "state": "moving",
+        "reason": null,
+        "max_displacement_mm": 2.0,
+        "max_speed_mm_s": 400.0
+      },
+      {
+        "from_frame_index": 3,
+        "to_frame_index": 4,
+        "start_ns": 15000000,
+        "end_ns": 20000000,
+        "state": "moving",
+        "reason": null,
+        "max_displacement_mm": 2.0,
+        "max_speed_mm_s": 400.0
+      },
+      {
+        "from_frame_index": 4,
+        "to_frame_index": 5,
+        "start_ns": 20000000,
+        "end_ns": 25000000,
+        "state": "moving",
+        "reason": null,
+        "max_displacement_mm": 2.0,
+        "max_speed_mm_s": 400.0
+      },
+      {
+        "from_frame_index": 5,
+        "to_frame_index": 6,
+        "start_ns": 25000000,
+        "end_ns": 30000000,
+        "state": "stationary",
+        "reason": null,
+        "max_displacement_mm": 0.0,
+        "max_speed_mm_s": 0.0
+      },
+      {
+        "from_frame_index": 6,
+        "to_frame_index": 7,
+        "start_ns": 30000000,
+        "end_ns": 35000000,
+        "state": "stationary",
+        "reason": null,
+        "max_displacement_mm": 0.0,
+        "max_speed_mm_s": 0.0
+      },
+      {
+        "from_frame_index": 7,
+        "to_frame_index": 8,
+        "start_ns": 35000000,
+        "end_ns": 40000000,
+        "state": "stationary",
+        "reason": null,
+        "max_displacement_mm": 0.0,
+        "max_speed_mm_s": 0.0
+      }
+    ],
+    "boundary_candidates": [
+      {
+        "kind": "motion_start_candidate",
+        "from_frame_index": 2,
+        "to_frame_index": 3,
+        "window_start_ns": 10000000,
+        "window_end_ns": 15000000
+      },
+      {
+        "kind": "motion_stop_candidate",
+        "from_frame_index": 5,
+        "to_frame_index": 6,
+        "window_start_ns": 25000000,
+        "window_end_ns": 30000000
+      }
+    ],
+    "limitations": [
+      "These are XY observation-state candidates, NOT verified cue strikes or shot boundaries.",
+      "Source-index gaps, missing IDs and low confidence are unknown, never assumed stationary.",
+      "Thresholds are configurable diagnostics, not calibrated physics or proven noise levels.",
+      "Tracking IDs do not identify cue ball or canonical ball numbers.",
+      "A continuous ID does not prove stable object identity across tracker switches.",
+      "No spin, impact, pocketing or motion between observed frames is inferred.",
+      "Coordinate direction and real-world geometry remain uncalibrated."
+    ]
+  }
+}
