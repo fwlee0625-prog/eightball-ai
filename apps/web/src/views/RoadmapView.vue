@@ -121,7 +121,7 @@ function isExpanded(milestoneId: string) {
 <template>
   <main class="roadmap-page">
     <div class="roadmap-shell">
-      <header class="roadmap-header">
+      <header class="roadmap-header" data-layout-region="fixed-header">
         <div class="roadmap-brand">
           <div class="roadmap-mark" aria-hidden="true">8</div>
           <div class="roadmap-title-block">
@@ -166,7 +166,7 @@ function isExpanded(milestoneId: string) {
         <span>数据更新 {{ roadmap.updatedAt }} · {{ roadmap.timezone }}</span>
       </div>
 
-      <div class="roadmap-layout">
+      <div class="roadmap-layout" data-layout-region="scroll-content">
         <section class="milestones-column" aria-labelledby="milestones-title">
           <div class="column-heading">
             <div>
@@ -176,7 +176,7 @@ function isExpanded(milestoneId: string) {
             <span class="milestone-total">{{ milestoneCards.length }} 个阶段 · {{ stats.pending }} 项待开始</span>
           </div>
 
-          <div class="milestone-stack">
+          <div class="milestone-stack" data-scroll-region="milestones">
             <article
               v-for="milestone in milestoneCards"
               :id="'milestone-' + milestone.id"
@@ -238,7 +238,7 @@ function isExpanded(milestoneId: string) {
         </section>
 
         <aside class="roadmap-sidebar">
-          <section class="focus-panel" aria-labelledby="focus-title">
+          <section class="focus-panel" data-scroll-region="focus" aria-labelledby="focus-title">
             <div class="sidebar-heading">
               <span class="focus-target" aria-hidden="true">◎</span>
               <div>
@@ -715,4 +715,315 @@ function isExpanded(milestoneId: string) {
   .roadmap-sidebar { grid-template-columns: 1fr; }
   .focus-panel { grid-row: auto; }
 }
+
+/* M0 dashboard viewport layout: fixed header, independent content scrollers. */
+.roadmap-page {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roadmap-shell {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.roadmap-header,
+.roadmap-meta,
+.roadmap-footer {
+  flex: 0 0 auto;
+}
+
+.roadmap-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+.milestones-column {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.column-heading {
+  flex: 0 0 auto;
+}
+
+.milestone-stack {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  align-content: start;
+  padding-right: 6px;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(83, 137, 190, 0.48) rgba(18, 31, 47, 0.5);
+  scrollbar-width: thin;
+}
+
+.milestone-stack::-webkit-scrollbar,
+.focus-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.milestone-stack::-webkit-scrollbar-track,
+.focus-panel::-webkit-scrollbar-track {
+  border-radius: 99px;
+  background: rgba(18, 31, 47, 0.5);
+}
+
+.milestone-stack::-webkit-scrollbar-thumb,
+.focus-panel::-webkit-scrollbar-thumb {
+  border: 1px solid rgba(8, 13, 22, 0.7);
+  border-radius: 99px;
+  background: rgba(83, 137, 190, 0.48);
+}
+
+.roadmap-sidebar {
+  display: flex;
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.focus-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-color: rgba(83, 137, 190, 0.48) rgba(18, 31, 47, 0.5);
+  scrollbar-width: thin;
+}
+
+.sidebar-heading {
+  position: sticky;
+  z-index: 2;
+  top: -14px;
+  margin: -14px -13px 0;
+  padding: 14px 13px 12px;
+  background: linear-gradient(150deg, #0f1928, #0d1725);
+}
+
+.eightball-panel {
+  flex: 0 0 clamp(150px, 24vh, 230px);
+  min-height: 0;
+}
+
+.eightball-orbit {
+  flex: 1 1 auto;
+  height: clamp(72px, 16vh, 150px);
+  min-height: 0;
+}
+
+.eightball {
+  width: clamp(76px, 16vh, 146px);
+  height: clamp(76px, 16vh, 146px);
+}
+
+.eightball::before {
+  top: 30.5%;
+  left: 30.5%;
+  width: 39%;
+  height: 39%;
+}
+
+.eightball span {
+  font-size: clamp(24px, 4vh, 39px);
+}
+
+.eightball-panel p {
+  margin: 0 0 4px;
+  font-size: clamp(12px, 2vh, 17px);
+}
+
+.eightball-caption {
+  font-size: 6px;
+}
+
+.eightball-streak {
+  bottom: 42px;
+}
+
+.roadmap-footer {
+  max-height: 36px;
+  overflow: hidden;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 7px;
+}
+
+.roadmap-footer > span:nth-child(2) {
+  display: none;
+}
+
+.milestone-chevron {
+  display: grid;
+  align-self: center;
+  justify-self: center;
+  height: 100%;
+  min-height: 28px;
+  place-items: center;
+  line-height: 1;
+}
+
+@media (max-width: 1120px) {
+  .roadmap-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .roadmap-summary {
+    width: min(100%, 620px);
+  }
+}
+
+@media (max-width: 820px) {
+  .roadmap-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(135px, 30%);
+  }
+
+  .roadmap-sidebar {
+    display: flex;
+    min-height: 0;
+  }
+
+  .focus-panel {
+    min-height: 0;
+  }
+
+  .eightball-panel,
+  .legend-panel {
+    display: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .roadmap-page {
+    padding: 12px 10px;
+  }
+
+  .roadmap-header {
+    gap: 9px;
+  }
+
+  .roadmap-brand {
+    min-width: 0;
+    gap: 9px;
+    align-items: center;
+  }
+
+  .roadmap-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 20px;
+  }
+
+  .roadmap-title-block h1 {
+    font-size: 21px;
+  }
+
+  .roadmap-summary {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .summary-card {
+    min-width: 0;
+    min-height: 48px;
+    gap: 5px;
+    padding: 6px;
+  }
+
+  .progress-ring {
+    width: 28px;
+    height: 28px;
+  }
+
+  .progress-ring::before {
+    width: 22px;
+    height: 22px;
+  }
+
+  .summary-symbol {
+    width: 25px;
+    height: 25px;
+    font-size: 14px;
+  }
+
+  .summary-copy > span {
+    font-size: 8px;
+  }
+
+  .summary-copy strong {
+    font-size: 13px;
+  }
+
+  .summary-copy small {
+    display: none;
+  }
+
+  .roadmap-meta {
+    gap: 5px;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    font-size: 8px;
+  }
+
+  .roadmap-layout {
+    grid-template-rows: minmax(0, 1fr) minmax(125px, 29%);
+    gap: 8px;
+  }
+
+  .column-heading {
+    margin-bottom: 6px;
+  }
+
+  .milestone-toggle {
+    grid-template-columns: 30px minmax(0, 1fr) 14px;
+  }
+
+  .milestone-progress {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+  }
+
+  .milestone-chevron {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .milestone-heading > small {
+    white-space: normal;
+  }
+
+  .task-list {
+    padding: 0 10px 10px;
+  }
+
+  .task-row {
+    grid-template-columns: 17px minmax(0, 1fr) 62px;
+  }
+
+  .task-date {
+    grid-column: 2;
+    text-align: left;
+  }
+}
+
 </style>

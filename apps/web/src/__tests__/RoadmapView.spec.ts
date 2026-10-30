@@ -45,6 +45,16 @@ describe('RoadmapView', () => {
     expect(wrapper.text()).toContain('待开始')
   })
 
+
+  it('keeps the header fixed and gives milestones and current focus separate scroll regions', () => {
+    const wrapper = mount(RoadmapView)
+
+    expect(wrapper.get('[data-layout-region="fixed-header"]').exists()).toBe(true)
+    expect(wrapper.get('[data-layout-region="scroll-content"]').exists()).toBe(true)
+    expect(wrapper.get('[data-scroll-region="milestones"]').exists()).toBe(true)
+    expect(wrapper.get('[data-scroll-region="focus"]').exists()).toBe(true)
+  })
+
   it('shows the M1 real-world acceptance gate separately from completed synthetic tasks', () => {
     const wrapper = mount(RoadmapView)
     const m1 = wrapper.get('#milestone-M1')
