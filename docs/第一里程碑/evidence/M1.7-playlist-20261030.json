@@ -1,0 +1,34 @@
+{
+  "report_version": "0.1.0",
+  "match_id": "synthetic-match-001",
+  "rack_id": "synthetic-rack-001",
+  "table_id": "vision-table-001",
+  "sequence_origin": "manual",
+  "shot_count": 2,
+  "shots": [
+    {
+      "order": 1,
+      "shot_id": "synthetic-shot-001",
+      "trajectory_id": "synthetic-trajectory-001",
+      "state_version": 1,
+      "frame_count": 6,
+      "duration_ns": 1750000000,
+      "timestamp_origin": "shot_start"
+    },
+    {
+      "order": 2,
+      "shot_id": "synthetic-shot-002",
+      "trajectory_id": "synthetic-trajectory-002",
+      "state_version": 2,
+      "frame_count": 6,
+      "duration_ns": 1750000000,
+      "timestamp_origin": "shot_start"
+    }
+  ],
+  "limitations": [
+    "Shot order is supplied by the user, not inferred from observed XY motion.",
+    "Each shot has an independent nanosecond timebase starting at shot_start; no wall-clock or cross-shot duration is derived.",
+    "Strictly increasing state_version tracks snapshots, not verified physical continuity or confirmed strikes.",
+    "Tracking IDs and real-world geometry remain provisional."
+  ]
+}

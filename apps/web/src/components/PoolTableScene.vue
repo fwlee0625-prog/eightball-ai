@@ -4,6 +4,8 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 
+import { createSceneResourceDisposer, detachEmbeddedBalls } from '@/utils/modelAsset'
+
 import type { SceneStatus, TableState } from '@/types/tableState'
 
 const props = defineProps<{
@@ -44,6 +46,8 @@ let animationFrame = 0
 let ballGroup: THREE.Group | null = null
 let ballGeometry: THREE.SphereGeometry | null = null
 let tableSurfaceY = 0
+const detachedModelPieces: THREE.Object3D[] = []
+const disposeSceneResources = createSceneResourceDisposer()
 const ballMeshes = new Map<number, THREE.Mesh<THREE.SphereGeometry, THREE.MeshStandardMaterial>>()
 const ballLabels = new Map<number, THREE.Sprite>()
 const raycaster = new THREE.Raycaster()
@@ -396,6 +400,12 @@ onMounted(async () => {
     const loader = new GLTFLoader()
     try {
       const gltf = await loader.loadAsync(import.meta.env.BASE_URL + 'model/billiards.glb')
+      const filtering = detachEmbeddedBalls(gltf.scene)
+      if (filtering.status === 'removed') {
+        detachedModelPieces.push(filtering.detached)
+      } else if (filtering.status === 'unexpected-structure') {
+        console.warn('GLB 内置 Balls 子树结构不符合预期，保留原模型以避免误删')
+      }
       prepareModel(gltf.scene)
       addModel(gltf.scene)
       setStatus('ready', '模型已载入；尺寸沿用 GLB，台面高度仍需标定')
@@ -424,20 +434,8 @@ onBeforeUnmount(() => {
   renderer?.domElement.removeEventListener('pointerdown', onPointerDown)
   renderer?.domElement.removeEventListener('pointerup', onPointerUp)
 
-  if (scene) {
-    scene.traverse((object) => {
-      if (object instanceof THREE.Mesh || object instanceof THREE.Sprite) {
-        if (object instanceof THREE.Mesh) object.geometry.dispose()
-        const materials = Array.isArray(object.material) ? object.material : [object.material]
-        for (const material of materials) {
-          for (const value of Object.values(material)) {
-            if (value instanceof THREE.Texture) value.dispose()
-          }
-          material.dispose()
-        }
-      }
-    })
-  }
+  disposeSceneResources(scene ? [scene, ...detachedModelPieces] : detachedModelPieces)
+  detachedModelPieces.length = 0
   renderer?.dispose()
   renderer?.domElement.remove()
   ballMeshes.clear()

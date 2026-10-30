@@ -47,3 +47,24 @@
 
 ## 需要数据提供方明确的问题
 是否有真实采样时钟？球直径/台面尺寸？袋口检测？球号追踪丢失率？能否提供球局静止标记？哪一种赛事规则？是否能在训练/个人项目中合法使用？
+
+
+## 正式逐杆轨迹记录契约 v0.1.0
+
+正式契约以 `packages/contracts/schemas/trajectory.schema.json` 为准；本文件前面的 JSON 是早期设计草案，不能替代正式 Schema。
+
+| 字段 | 含义与约束 |
+|---|---|
+| `trajectory_id` | 轨迹记录唯一标识 |
+| `match_id / rack_id / shot_id` | 对局、局、单杆关联标识，均为非空字符串 |
+| `table_id / state_version` | 球桌和轨迹起始状态版本；状态不匹配时不可静默叠加回放 |
+| `coordinate_frame / table_geometry` | 沿用标准状态坐标元数据；坐标单位 mm，活动区域按矩形边界校验 |
+| `timebase.timestamp_unit` | 固定为 `ns` |
+| `timebase.timestamp_origin` | 固定为 `shot_start`，即击球开始为时间零点，不使用 Unix epoch 纳秒 |
+| `timebase.nominal_fps` | 记录来源名义帧率，例如 200；只作为元数据，不用于推算真实时间 |
+| `frames[].frame_index` | 原始帧索引，首帧为 0，后续严格递增；允许跳号以保留缺帧 |
+| `frames[].timestamp_ns` | 相对击球开始的实际采样时间，首帧为 0，后续必须严格递增 |
+| `frames[].balls[]` | 本帧实际观测到的检测 ID、X/Y 与可选置信度；同帧 ID 唯一、坐标有限且在活动矩形内 |
+| `provenance` | 明确区分 `synthetic` 与 `project-provided`，并说明样例用途和来源 |
+
+缺失检测不自动补球；回放仅展示数据中实际存在的帧。未来如需插值，必须作为单独的显示层处理，不能改写原始采样记录。合成样例见 `data/samples/trajectory-001.json`。
