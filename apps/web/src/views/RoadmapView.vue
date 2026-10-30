@@ -746,6 +746,7 @@ function isExpanded(milestoneId: string) {
   min-height: 0;
   overflow: hidden;
   align-items: stretch;
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .milestones-column {
@@ -760,15 +761,29 @@ function isExpanded(milestoneId: string) {
 }
 
 .milestone-stack {
+  display: flex;
   flex: 1 1 auto;
   min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
   overflow-x: hidden;
   overflow-y: auto;
-  align-content: start;
   padding-right: 6px;
   overscroll-behavior: contain;
   scrollbar-color: rgba(83, 137, 190, 0.48) rgba(18, 31, 47, 0.5);
   scrollbar-width: thin;
+}
+
+.milestone-card {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.milestone-toggle {
+  position: relative;
+  z-index: 1;
+  min-height: 58px;
 }
 
 .milestone-stack::-webkit-scrollbar,
@@ -872,7 +887,8 @@ function isExpanded(milestoneId: string) {
   display: grid;
   align-self: center;
   justify-self: center;
-  height: 100%;
+  width: 16px;
+  height: 28px;
   min-height: 28px;
   place-items: center;
   line-height: 1;
