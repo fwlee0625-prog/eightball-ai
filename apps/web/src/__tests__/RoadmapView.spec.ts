@@ -49,10 +49,10 @@ describe('RoadmapView', () => {
   it('keeps the header fixed and gives milestones and current focus separate scroll regions', () => {
     const wrapper = mount(RoadmapView)
 
-    expect(wrapper.get('[data-layout-region="fixed-header"]').exists()).toBe(true)
-    expect(wrapper.get('[data-layout-region="scroll-content"]').exists()).toBe(true)
-    expect(wrapper.get('[data-scroll-region="milestones"]').exists()).toBe(true)
-    expect(wrapper.get('[data-scroll-region="focus"]').exists()).toBe(true)
+    expect(wrapper.find('[data-layout-region="fixed-header"]').exists()).toBe(true)
+    expect(wrapper.find('[data-layout-region="scroll-content"]').exists()).toBe(true)
+    expect(wrapper.find('[data-scroll-region="milestones"]').exists()).toBe(true)
+    expect(wrapper.find('[data-scroll-region="focus"]').exists()).toBe(true)
   })
 
   it('shows the M1 real-world acceptance gate separately from completed synthetic tasks', () => {
