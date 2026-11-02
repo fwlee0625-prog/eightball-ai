@@ -38,11 +38,19 @@ describe('RoadmapView', () => {
     const toggle = wrapper.get('[data-test="milestone-toggle-M2"]')
 
     expect(wrapper.text()).not.toContain('Pooltool 兼容性与 Python 版本')
+    expect(wrapper.find('#tasks-M2').exists()).toBe(false)
+
     await toggle.trigger('click')
 
     expect(toggle.attributes('aria-expanded')).toBe('true')
+    expect(wrapper.find('#tasks-M2').exists()).toBe(true)
     expect(wrapper.text()).toContain('Pooltool 兼容性与 Python 版本')
     expect(wrapper.text()).toContain('待开始')
+
+    await toggle.trigger('click')
+
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(wrapper.find('#tasks-M2').exists()).toBe(false)
   })
 
 

@@ -4,10 +4,10 @@
   "title": "台球推理开发看板",
   "subtitle": "个人开发进度 · 里程碑总览",
   "branch": "fix/single-axis-coordinate-step-20261028",
-  "updatedAt": "2026-11-02 22:09:03",
+  "updatedAt": "2026-11-02 22:33:58",
   "timezone": "Asia/Shanghai",
   "dashboardValidation": {
-    "updatedAt": "2026-11-02 22:09:03",
+    "updatedAt": "2026-11-02 22:33:58",
     "scope": "里程碑卡片按内容高度展开、反复折叠、键盘操作及列表独立滚动；不改变 M0–M8 任务验收状态。",
     "evidence": "docs/第一里程碑/M0.md#里程碑展开内容裁切修复"
   },
