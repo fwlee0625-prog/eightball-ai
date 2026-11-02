@@ -46,6 +46,33 @@ describe('RoadmapView', () => {
   })
 
 
+  it('repeatedly collapses and expands cards independently', async () => {
+    const wrapper = mount(RoadmapView)
+    const m1 = wrapper.get('[data-test="milestone-toggle-M1"]')
+    const m2 = wrapper.get('[data-test="milestone-toggle-M2"]')
+
+    for (let cycle = 0; cycle < 3; cycle++) {
+      expect(m1.attributes('aria-expanded')).toBe('true')
+      expect(wrapper.find('#tasks-M1').exists()).toBe(true)
+      await m1.trigger('click')
+      expect(m1.attributes('aria-expanded')).toBe('false')
+      expect(wrapper.find('#tasks-M1').exists()).toBe(false)
+
+      await m2.trigger('click')
+      expect(m2.attributes('aria-expanded')).toBe('true')
+      expect(m2.attributes('aria-controls')).toBe('tasks-M2')
+      expect(wrapper.find('#tasks-M2').exists()).toBe(true)
+      await m1.trigger('click')
+      expect(wrapper.find('#tasks-M1').exists()).toBe(true)
+      expect(wrapper.find('#tasks-M2').exists()).toBe(true)
+
+      await m2.trigger('click')
+      expect(m2.attributes('aria-expanded')).toBe('false')
+      expect(wrapper.find('#tasks-M2').exists()).toBe(false)
+      expect(wrapper.find('#tasks-M1').exists()).toBe(true)
+    }
+  })
+
   it('keeps the header fixed and gives milestones and current focus separate scroll regions', () => {
     const wrapper = mount(RoadmapView)
 

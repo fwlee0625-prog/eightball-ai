@@ -193,6 +193,7 @@ function isExpanded(milestoneId: string) {
                 type="button"
                 :data-test="'milestone-toggle-' + milestone.id"
                 :aria-expanded="isExpanded(milestone.id)"
+                :aria-controls="'tasks-' + milestone.id"
                 @click="toggleMilestone(milestone.id)"
               >
                 <span class="milestone-icon" aria-hidden="true">{{ milestone.icon }}</span>
@@ -453,7 +454,12 @@ function isExpanded(milestoneId: string) {
   font-weight: 680;
 }
 .milestone-total { color: #7086a2; font-size: 10px; }
-.milestone-stack { display: grid; gap: 9px; }
+.milestone-stack {
+  display: grid;
+  /* Keep expanded cards at their content height inside the constrained scroller. */
+  grid-auto-rows: max-content;
+  gap: 9px;
+}
 
 .milestone-card {
   overflow: hidden;

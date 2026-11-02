@@ -4,8 +4,13 @@
   "title": "台球推理开发看板",
   "subtitle": "个人开发进度 · 里程碑总览",
   "branch": "fix/single-axis-coordinate-step-20261028",
-  "updatedAt": "2026-10-30 10:51:45",
+  "updatedAt": "2026-11-02 22:09:03",
   "timezone": "Asia/Shanghai",
+  "dashboardValidation": {
+    "updatedAt": "2026-11-02 22:09:03",
+    "scope": "里程碑卡片按内容高度展开、反复折叠、键盘操作及列表独立滚动；不改变 M0–M8 任务验收状态。",
+    "evidence": "docs/第一里程碑/M0.md#里程碑展开内容裁切修复"
+  },
   "progressRule": "总进度按全部任务中 status=done 的数量计算；里程碑进度由任务状态实时汇总。代码已提交或远程 CI 通过，不自动等于本地验收完成。",
   "milestones": [
     {
