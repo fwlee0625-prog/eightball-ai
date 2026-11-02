@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Eightball AI provisional 2D calibration landmarks",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "profile_id",
+    "table_id",
+    "source_kind",
+    "active_length_mm",
+    "active_width_mm",
+    "orientation_status",
+    "ball_diameter_mm",
+    "pocket_centers_mm",
+    "landmarks"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "table_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_kind": {
+      "enum": [
+        "synthetic",
+        "project-provided"
+      ]
+    },
+    "active_length_mm": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "active_width_mm": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "orientation_status": {
+      "const": "provisional"
+    },
+    "ball_diameter_mm": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      ]
+    },
+    "pocket_centers_mm": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "x_mm",
+          "y_mm"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "x_mm": {
+            "type": "number"
+          },
+          "y_mm": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "landmarks": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "pixel_x",
+          "pixel_y",
+          "x_mm",
+          "y_mm"
+        ],
+        "properties": {
+          "pixel_x": {
+            "type": "number"
+          },
+          "pixel_y": {
+            "type": "number"
+          },
+          "x_mm": {
+            "type": "number"
+          },
+          "y_mm": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}

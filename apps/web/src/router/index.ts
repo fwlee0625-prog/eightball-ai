@@ -8,6 +8,11 @@ const router = createRouter({
       name: 'table-studio',
       component: () => import('@/views/TableStudioView.vue'),
     },
+    {
+      path: '/roadmap',
+      name: 'roadmap',
+      component: () => import('@/views/RoadmapView.vue'),
+    },
   ],
 })
 

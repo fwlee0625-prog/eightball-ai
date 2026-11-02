@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Eightball AI Rack Playlist",
+  "description": "Explicitly ordered shot records; timestamps restart from shot_start for every shot; no inferred wall-clock timing.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "match_id",
+    "rack_id",
+    "table_id",
+    "sequence_origin",
+    "shots"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "match_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rack_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "table_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sequence_origin": {
+      "const": "manual"
+    },
+    "shots": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 100,
+      "items": {
+        "$ref": "trajectory.schema.json"
+      }
+    }
+  }
+}

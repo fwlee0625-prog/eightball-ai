@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-已实现第一步：视觉球坐标的基础校验和标准球局状态转换，以及对应的 Python 单元测试。赛事规则、几何碰撞、物理仿真、候选评分和规划算法仍未实现。
+已实现第一步：视觉球坐标的基础校验、标准球局状态转换，以及逐杆轨迹记录 v0.1.0 的结构与领域约束校验。赛事规则、几何碰撞、物理仿真、候选评分和规划算法仍未实现。
 
 ## 已实现内容
 
@@ -30,3 +30,32 @@
 2. 确认球半径与袋口几何，再实现球体碰撞和可达区域检查。
 3. 明确 id 是追踪 ID 还是球的真实编号，并建立 cue-ball / group 等独立语义字段。
 4. 在契约稳定后接入 API 和前端球桌可视化。
+
+## 逐杆轨迹校验
+
+- `billiards_core.trajectory.validate_trajectory_record` 校验轨迹元数据、相对击球时间戳、原始帧索引、逐帧检测 ID、坐标边界与来源标记。
+- JSON Schema 由 `packages/contracts/schemas/trajectory.schema.json` 提供；测试同时检查 Schema 自身和领域规则。
+- 从仓库根目录执行 `uv run --locked pytest -q` 或项目原有 unittest 命令运行测试。
+
+
+## M1.4：轨迹数据质量报告（Python 内部 API）
+
+新增 billiards_core.trajectory_quality.analyze_trajectory_quality(record, low_confidence_threshold=0.5, nominal_timing_tolerance=0.25, ball_diameter_mm=None)。它先复用正式 v0.1.0 轨迹校验器，然后只读统计记录帧数量、源索引缺口、同杆检测 ID 缺失、置信度低值和时间戳相对名义 FPS 的偏差。报告 JSON 可序列化、同输入结果稳定；每类仅显示最多 20 条示例，统计计数保留完整。
+
+未提供球直径时跳过重叠诊断，输出 null 而非 0。只有调用者提供经过测量的球直径，才计算二维球心间距疑似重叠；不能直接推断真实碰撞、入袋或掉帧。来源 ID 不是正式球号，坐标原点和方向仍待标定，名义 FPS 不是实测采集性能。真实球半径/直径尚未经过实测标定；`ball_diameter_mm` 是调用方提供的诊断参数，传入参数本身不证明已标定。GLB 网格尺寸只描述模型资产，不能证明现实球的实际尺寸。当前没有前端质量卡或服务 API；本轮只覆盖 Python 核心。执行 uv run --locked pytest -q python/billiards_core/tests/test_trajectory_quality.py 和 uv run --locked ruff check .；自动化与本地状态按 M1.4 验证日志为准。
+
+## M1.6：XY 运动与击球边界候选
+
+调用 `billiards_core.trajectory_motion.analyze_trajectory_motion(record, stationary_speed_mm_s=2, moving_speed_mm_s=20, min_run_intervals=2, min_confidence=0.5)`。只比较原始相邻索引的检测：有索引缺口、观测 ID 不完整、显式低置信度或速度处于阈值灰区时记 unknown；仅在连续区间至少 2 段静止转 2 段运动（反之亦然）时输出候选时间窗。所有速度采用原始时间戳，单位 mm/s。不能据此确证真实击球、旋转、碰撞、进袋或物理参数；默认阈值仅用于合成诊断，真实测量后需独立校验。
+
+## M1.7：一局多杆只读契约
+
+`billiards_core.rack_playlist.validate_rack_playlist` 和 `summarize_rack_playlist` 接受显式手动排序的多杆 JSON（`packages/contracts/schemas/rack-playlist.schema.json`）；检验同局同桌、跟踪 ID 契约、shot_id/trajectory_id 唯一、state_version 递增和坐标系一致；不推断击球边界或跨杆时间。合成样例 `data/samples/rack-playlist-001.json` 不证明物理状态连续。
+
+## M1.8：像素到毫米的仿射预览（不代表真实标定）
+
+`billiards_core.calibration_profile.fit_affine_preview(profile)` 在独立 `calibration-preview.schema.json` v0.1.0 输入中计算二维仿射映射；3–32个显式像素/台面毫米对应点，拒绝退化、非法和超界输入；报告拟合残差和永远为 false 的 `physical_calibration_verified`。仿射不能纠正透视或畸变，不改变既有 `trajectory.schema.json`，也不改变 GLB 或球体模型尺寸。真实球径、袋口、台面方向和视觉映射仍待实测。
+
+## M1.9：已有职业讲解文本与逐杆观测分离
+
+`shot_annotations.validate_shot_annotations` 和 `link_shot_annotations` 只接受由项目提供并显式按 shot_id 关联的原始讲解文本（`text_source=provided-transcript`）；实际结果 `actual_observation` 默认为 null，手动记录时必须独立声明 `source=manual-note`。没有音频解析、语义提取、结果推断或跨杆自动对齐。 `m1_pipeline.summarize_m1_pipeline` 可将合成多杆、质量、运动候选、仿射预览、讲解文本聚合为确定性报告，始终声明真实世界验证未完成。

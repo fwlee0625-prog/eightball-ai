@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Eightball AI explicit expert text / observed outcome associations",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "match_id",
+    "rack_id",
+    "annotations"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.1.0"
+    },
+    "match_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rack_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "annotations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "shot_id",
+          "expert_text",
+          "text_source",
+          "relative_timestamp_ns",
+          "actual_observation"
+        ],
+        "properties": {
+          "shot_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "expert_text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "text_source": {
+            "const": "provided-transcript"
+          },
+          "relative_timestamp_ns": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            ]
+          },
+          "actual_observation": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "raw_text",
+                  "source"
+                ],
+                "properties": {
+                  "raw_text": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "source": {
+                    "const": "manual-note"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "exact_sample": {
+    "report_version": "0.1.0",
+    "profile_id": "synthetic-affine-preview-001",
+    "table_id": "vision-table-001",
+    "source_kind": "synthetic",
+    "coordinate_units": "mm",
+    "input_units": "pixels",
+    "mapping_type": "2d_affine_preview",
+    "orientation_status": "provisional",
+    "matrix_x": [
+      2.0,
+      0.0,
+      0.0
+    ],
+    "matrix_y": [
+      0.0,
+      3.0,
+      0.0
+    ],
+    "landmark_count": 4,
+    "rms_residual_mm": 0.0,
+    "max_residual_mm": 0.0,
+    "ball_diameter_mm": null,
+    "pocket_centers_provided": false,
+    "physical_calibration_verified": false,
+    "limitations": [
+      "Affine 2D mapping cannot correct perspective distortion or lens effects.",
+      "In-sample residuals do not measure external calibration accuracy.",
+      "No real-world coordinate directions, ball diameter or pocket geometry are verified.",
+      "A supplied measurement or GLB mesh dimension is not independent physical verification.",
+      "Preview parameters must not silently replace trajectory or model transforms."
+    ]
+  },
+  "noisy_sample": {
+    "report_version": "0.1.0",
+    "profile_id": "synthetic-affine-preview-001",
+    "table_id": "vision-table-001",
+    "source_kind": "synthetic",
+    "coordinate_units": "mm",
+    "input_units": "pixels",
+    "mapping_type": "2d_affine_preview",
+    "orientation_status": "provisional",
+    "matrix_x": [
+      2.015,
+      0.015,
+      -0.75
+    ],
+    "matrix_y": [
+      0.0,
+      3.0,
+      0.0
+    ],
+    "landmark_count": 4,
+    "rms_residual_mm": 0.75,
+    "max_residual_mm": 0.75,
+    "ball_diameter_mm": null,
+    "pocket_centers_provided": false,
+    "physical_calibration_verified": false,
+    "limitations": [
+      "Affine 2D mapping cannot correct perspective distortion or lens effects.",
+      "In-sample residuals do not measure external calibration accuracy.",
+      "No real-world coordinate directions, ball diameter or pocket geometry are verified.",
+      "A supplied measurement or GLB mesh dimension is not independent physical verification.",
+      "Preview parameters must not silently replace trajectory or model transforms."
+    ]
+  },
+  "rejected_inputs": {
+    "missing_points": "landmarks must contain between 3 and 32 point pairs",
+    "duplicate_pixels": "duplicate pixel landmark",
+    "collinear": "calibration landmarks are degenerate or collinear",
+    "nan": "landmarks[0].pixel_x must be a finite number",
+    "outside_table": "landmark lies outside active table",
+    "diameter_zero": "ball_diameter_mm must be a positive finite number",
+    "diameter_negative": "ball_diameter_mm must be a positive finite number",
+    "diameter_boolean": "ball_diameter_mm must be a positive finite number",
+    "diameter_infinite": "ball_diameter_mm must be a positive finite number",
+    "diameter_oversize": "ball_diameter_mm exceeds table width",
+    "incomplete_pockets": "pocket_centers_mm must have zero or six explicitly supplied pockets"
+  }
+}

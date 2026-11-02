@@ -1,32 +1,59 @@
 # API 服务
 
-## 状态
+## 当前状态与接口
 
-规划中。当前仓库尚无 FastAPI 应用代码、依赖配置或可运行的 /health 接口。本 README 描述未来模块边界，不表示服务已经存在。
+M0 已实现最小 FastAPI 服务：`GET /health` 返回HTTP 200及
+`{"status":"ok","service":"eightball-api","version":"0.1.0"}`。
+这是进程存活检查，不表示规则、物理、规划或模型推理已就绪。
+`/docs`、`/openapi.json` 由 FastAPI 生成；其余业务路由与 WebSocket 尚未实现。
 
-## 职责
+## 安装与运行
 
-- 健康检查与服务版本信息。
-- 提交球局状态、请求下一杆推荐。
-- 创建、取消清台规划任务。
-- 通过 WebSocket 推送规划进度和逐杆结果。
-- 输入校验、认证边界（如部署需要）、超时、限流、错误映射和可观测性。
+从仓库根目录执行，使用 Python 3.12 或3.13、uv 0.11.3：
 
-## 边界
+```bash
+uv sync --locked
+uv run --locked uvicorn billiards_api.main:create_app --factory --app-dir apps/api --host localhost --port 8000
+```
 
-- 使用共享契约描述请求、响应和事件。
-- 不在路由处理函数中实现规则引擎、几何、物理仿真或搜索算法。
-- 不在在线请求路径里训练模型。
-- CPU 密集型仿真与搜索应进入有预算、限流和取消策略的 worker / 进程池；async 函数本身不等于并行计算。
-- WebSocket 只负责传输，不代替后台任务调度或持久化。
+本机日常启动、停止、重启统一通过 Spark 项目管理平台，登记根目录和上述启动命令。
+默认仅监听localhost。启动日志输出版本和CORS配置项数量，Uvicorn access日志记录请求状态。
+当前没有生产部署、认证或公网暴露配置。
 
-## 计划接口
+## 配置
 
-具体路径和字段以 packages/contracts 的正式契约为准。docs/plan/04_数据与接口/API与流式消息.md 当前仅是设计草案，尚非已经实现的接口。
+根目录 `.env.example` 是无密钥示例。默认允许 `http://localhost:5173` 和
+`http://127.0.0.1:5173` 的GET跨域请求，不启用凭据。
+`EIGHTBALL_CORS_ORIGINS` 可设置为JSON数组，`[]`关闭跨域访问；路径、通配符、凭据及无效端口会在启动前明确报错。
+本地`.env`不会自动读取；需要时复制示例并显式加载：
 
-## 实现后的验收方向
+```bash
+uv run --locked --env-file .env uvicorn billiards_api.main:create_app --factory --app-dir apps/api --host localhost --port 8000
+```
 
-- /health 在正常启动时返回明确状态。
-- 非法输入、规则未知、超时和内部错误有稳定且可解释的响应。
-- 规划事件带有 plan_id、state_version 和 sequence；客户端可以安全丢弃旧版本事件。
-- 测试覆盖重复请求、取消、WebSocket 断连、乱序事件和并发负载。
+浏览器地址或端口变化时同步修改允许的origin。CORS限制浏览器跨域读取，不代替身份认证。
+
+## 验证
+
+仓库根目录：
+
+```bash
+uv run --locked pytest -q
+uv run --locked ruff check .
+```
+
+pytest涵盖API健康响应及共享JSON Schema、CORS允许/拒绝/预检、错误配置和既有核心坐标校验。
+当前锁定FastAPI0.162.0、Starlette1.10.0、Uvicorn0.54.0；测试使用httpx0.28.1，
+Starlette会发出建议改用httpx2的弃用警告，现有测试通过，后续依赖调整应独立审查。
+
+## 边界与后续
+
+健康响应契约位于 `packages/contracts/schemas/health-response.schema.json`。
+API返回由Pydantic模型约束，测试用共享Schema校验生产者；前端消费者也使用该Schema常量校验。
+
+球局提交、推荐、规划任务与WebSocket接口仍是设计草案。领域规则、几何、仿真和搜索属于
+`python/billiards_core`；本模块仅负责HTTP边界、输入校验、任务编排和结果传输。
+
+官方接口核对（2026-10-28）：[FastAPI 首步](https://fastapi.tiangolo.com/tutorial/first-steps/)、
+[测试](https://fastapi.tiangolo.com/tutorial/testing/)、[CORS](https://fastapi.tiangolo.com/tutorial/cors/)、
+[uv锁定与同步](https://docs.astral.sh/uv/concepts/projects/sync/)。以uv.lock实际安装版本和测试结果为准。

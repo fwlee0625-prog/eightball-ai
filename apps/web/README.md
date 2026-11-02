@@ -5,14 +5,26 @@
 已从初始化脚手架推进到第一版球局工作台：
 
 - 使用 Three.js GLTFLoader 加载 public/model/billiards.glb。
+- GLB 加载后仅过滤已验证名称与层级的 `Balls`（16 个 `Ball_0`–`Ball_15`）内置球子树，避免与视觉球重复显示，并在计算模型包围盒前移除；未知结构保留原样并提示警告。
+- 顶栏显示真实 API 健康状态（连接中/已连接/未连接），3秒超时，失败可重试；API离线仍可使用本地球局。
 - 使用 OrbitControls 提供三维旋转、平移和缩放。
 - 从仓库级 data/samples/table-state-001.json 读取标准球局样例，渲染 16 个视觉检测目标。
+- M1 首步支持本地导入 `TableState` v0.1.0 JSON：严格检查版本、字段、正数几何尺寸、检测 ID 唯一性、有限坐标、台面边界和可选置信度。失败保留当前球局，成功替换当前会话并递增状态版本；无网络上传。
 - 点击球体可选择目标；可查看并修改 X/Y 坐标，坐标修改只存在于当前浏览器会话。
-- 坐标修改会增加 state_version；可恢复原始样例。
+- PC 工作台高度随浏览器窗口限定，右侧球局面板独立滚动；选球、导入提示和错误信息不再撑高 3D 视窗。
+- M1 支持 PC 二维顶视图拖拽移动现有检测目标；拖动一次只提交一次状态版本。键盘方向键移动 10 mm，Shift + 方向键移动 1 mm，并在活动台面边界内限位；视觉 ID 不是正式球号。
+- 坐标修改会增加 state_version；版本递增前检查 JavaScript 安全整数上限，无法安全递增时拒绝修改并保留原状态；可恢复原始样例。
 - 提供俯视视角、重置视角和检测 ID 标签开关。
 - 若 GLB 加载失败，页面会显示简化球台以便继续检查坐标。
 
-这不是物理仿真或 AI 规划器。当前球体颜色仅用于区分视觉 ID，不代表真实球色或正式球号。
+这不是物理仿真或 AI 规划器。可交互球体仍由标准球局状态产生；当前球体颜色仅用于区分视觉 ID，不代表真实球色或正式球号。移除内置装饰球也不表示台呢边界、坐标方向或物理尺寸已完成标定。
+
+## 开发看板
+
+- 路由：`/roadmap`，本地启动 Web 后访问 `http://localhost:5173/roadmap`。
+- 数据源：`src/data/roadmap.json`，页面不维护第二份任务状态。
+- 总进度、每个里程碑的完成数量与百分比均由任务状态计算；任务状态或验证证据变化时，必须在同一变更中更新 JSON。
+- 从球局工作台顶栏的「开发看板」入口可进入；看板页可返回原工作台。
 
 ## 模型与坐标限制
 
@@ -23,7 +35,13 @@
 - 球体显示半径 28.575 mm 仅用于可视化，尚未由项目提供方确认。
 - 坐标方向沿用视觉契约中的 provisional 约定；未做自动镜像或坐标变换。
 - 当前只校验坐标是否位于活动台面矩形范围内，不检查球体重叠、球袋几何或规则合法性。
-- 当前样例为单帧状态；编辑不会写回原始样例文件，也不会调用后端 API。
+- 已实现轨迹记录 v0.1.0 本地 JSON / CSV 导入和合成样例回放；按实际 `timestamp_ns` 驱动 2D / 3D 帧切换，支持播放、暂停、逐帧前后、时间轴定位和 0.25×–4× 倍速。
+- M1.5 增加本地轨迹质量摘要：统计帧数、检测数、源帧索引缺口、缺失观测、低置信度与名义时序偏差。摘要在浏览器本机计算，不上传轨迹文件、不调用 API；未实测球径前不进行球体重叠诊断。
+- 轨迹文件上限 1 MiB；仅当 `table_id`、`state_version` 和活动区域尺寸与当前球局完全一致时才允许回放。回放不修改当前球局，退出后恢复编辑状态。
+- 当前球局样例为单帧状态；编辑和文件导入不会写回原始样例文件，也不会调用后端 API。
+- 轨迹 CSV 使用扁平检测记录格式：每行一条检测目标，`frame_index` 与 `timestamp_ns` 用于聚合同一帧；轨迹元数据在每行重复且必须一致。`confidence` 列可省略，空值表示未提供；时间戳单位固定为 ns，坐标系沿用 Schema v0.1.0 的 provisional 约定。缺帧保持为索引 / 时间戳间隔，不补帧、不推断正式球号。
+- 标准球局 JSON 导入文件限制 1 MiB，需包含 `schema_version: "0.1.0"`、`table_id`、`state_version`、`source`、`coordinate_frame`、`table_geometry` 和 1–16 个 `balls`。接受可选 `confidence`，但不推断球号或碰撞是否合法。成功导入后本地版本设为 `max(当前版本, 文件版本) + 1`，旧选球清空；恢复样例仍回到原始 v1。
+- 当前工作台仅允许导入活动区域与现有会话完全相同的球桌（默认 2540 × 1270 mm），避免 GLB 与后备球桌尺寸混淆；其它尺寸需要完成对应模型标定再支持。视觉正方向仍为 provisional。二维拖拽仅按标准状态活动区域映射，不证明 GLB 朝向已标定。轨迹 JSON / CSV 本地导入和按实际时间戳切换记录帧已实现，但这不代表真实采集或渲染达到 200 FPS；真实轨迹接入、真实球桌几何标定和物理参数仍未完成；M1.3–M1.9 的实现 / 合成范围均已有对应本地验收记录；M1 整体仍需真实数据、几何标定与真实性能验收。
 
 ## 技术栈
 
@@ -41,12 +59,27 @@ Vue 3、TypeScript、Vite、Three.js、GLTFLoader、OrbitControls、Pinia、Vue 
 - pnpm exec oxlint .：只检查，不自动修复。
 - pnpm exec eslint .：只检查，不自动修复。
 
-仓库尚未提交 pnpm-lock.yaml。新增 Three.js 后请在目标开发环境运行 pnpm install 并审查解析版本；本次没有生成锁文件或执行本地构建。
+仓库已提交 pnpm-lock.yaml；使用 `pnpm install --frozen-lockfile` 保留锁定解析。Vue RC覆盖沿用既有配置，本轮未调整版本。
+
+API默认 `http://localhost:8000`，可复制 `.env.example` 为 `.env.local` 后修改 `VITE_API_BASE_URL`（只允许HTTP(S) origin，不含路径和凭据）。该变量公开到浏览器，禁止存放密钥。默认API CORS允许localhost:5173及127.0.0.1:5173；更换端口需同步API允许列表。API启动方式见根README；本机服务通过Spark管理。
 
 ## 主要文件
 
 - src/views/TableStudioView.vue：工作台布局、球局状态和坐标编辑。
 - src/components/PoolTableScene.vue：GLB 加载、Three.js 场景、球体和视角交互。
+- src/components/ApiHealthBadge.vue / src/utils/apiHealth.ts：API健康状态、超时和重试。
+- src/utils/modelAsset.ts：精确分离模型内置球与共享资源去重释放。
+- src/utils/tableStateImport.ts：根据共享 v0.1.0 JSON Schema 的字段约定校验标准球局导入，并补充 ID 唯一性、有限数值及边界领域检查。
+- src/utils/trajectoryCsvImport.ts：将扁平 CSV 检测记录转换为轨迹 Schema v0.1.0，并复用轨迹 JSON 校验器执行统一领域检查。
+- src/utils/trajectoryQualitySummary.ts：为当前已校验轨迹计算只读、本地质量摘要，不发起网络请求。
 - src/data/initialTableState.ts：引用仓库级标准状态样例。
 - src/types/tableState.ts：前端对标准球局状态的类型定义。
 - src/assets/main.css：响应式工作台样式。
+
+## M1.7：一局多杆本地回放
+
+轨迹文件选择器现支持多杆 JSON（正式结构 packages/contracts/schemas/rack-playlist.schema.json）；每份包含显式人工顺序的 2–100 个逐杆记录，首杆版本需要匹配当前球局，同一 table_id 与几何下后续版本严格递增。切换杆次重置该杆时间轴及质量摘要；回放只读，不改变底层球局。每杆时间戳独立从 0 开始，不代表跨杆绝对时间；单杆 JSON/CSV 保持支持。
+
+## M1.9：已提供讲解文本的本地关联
+
+载入单杆或多杆轨迹后，可以选择符合 `packages/contracts/schemas/shot-annotations.schema.json` 的本地 JSON（每个 shot_id 一条原文与可选人工实际结果备注），只在本机按明确的 match_id/rack_id/shot_id 关联；切换杆次时显示对应文本，不上传。原文不作为物理证据或机器推导的实际结果；不包含音频识别或自动语义标签。

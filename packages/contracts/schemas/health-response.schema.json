@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HealthResponse",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "service", "version"],
+  "properties": {
+    "status": { "const": "ok" },
+    "service": { "const": "eightball-api" },
+    "version": { "const": "0.1.0" }
+  }
+}
